@@ -115,7 +115,7 @@ npm run dev
 ### 4. **Access Points**
 - **Main Landing**: http://localhost:3000
 - **Brand Funnels**: http://localhost:3000/funnel/[brand-id]
-- **Admin Portal**: http://localhost:3001 (from admin-portal directory)
+- **Admin Portal**: http://localhost:3000/admin
 
 ## 📊 **URL Structure**
 
