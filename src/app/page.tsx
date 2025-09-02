@@ -39,6 +39,9 @@ export default function MultiBrandLanding() {
             </div>
             
             <div className="flex items-center space-x-4">
+              <Link href="/admin" className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">
+                Admin Panel
+              </Link>
               <a href="mailto:admin@veteranlegacylife.com" className="text-gray-500 hover:text-gray-700">
                 <Mail className="h-5 w-5" />
               </a>
