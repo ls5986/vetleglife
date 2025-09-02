@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createSupabaseAdmin } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 export async function POST(request: Request) {
   try {
@@ -17,13 +17,11 @@ export async function POST(request: Request) {
       exitIntent: leadData.exit_intent
     });
 
-    const supabaseAdmin = createSupabaseAdmin();
-
     // Test database connection first
     console.log('🔍 Testing database connection...');
     
     try {
-      const { data: testData, error: testError } = await supabaseAdmin
+      const { data: testData, error: testError } = await supabase
         .from('leads')
         .select('count')
         .limit(1);
@@ -44,7 +42,7 @@ export async function POST(request: Request) {
       console.log('🔍 Looking up brand for domain:', leadData.domain);
       
       try {
-        const { data: brandData, error: brandError } = await supabaseAdmin
+        const { data: brandData, error: brandError } = await supabase
           .from('brands')
           .select('id, brand_name, domain')
           .eq('domain', leadData.domain)
@@ -53,7 +51,7 @@ export async function POST(request: Request) {
         if (brandError) {
           console.error('❌ Error fetching brand:', brandError);
           // Try to find any active brand as fallback
-          const { data: fallbackBrand, error: fallbackError } = await supabaseAdmin
+          const { data: fallbackBrand, error: fallbackError } = await supabase
             .from('brands')
             .select('id, brand_name, domain')
             .eq('is_active', true)
@@ -81,7 +79,7 @@ export async function POST(request: Request) {
     // Check if lead already exists by session_id
     let existingLead = null;
     try {
-      const { data: checkData, error: checkError } = await supabaseAdmin
+      const { data: checkData, error: checkError } = await supabase
         .from('leads')
         .select('id, current_step, status')
         .eq('session_id', leadData.session_id)
@@ -178,7 +176,7 @@ export async function POST(request: Request) {
       });
 
       // Update existing lead
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await supabase
         .from('leads')
         .update({
           ...insertData,
@@ -201,7 +199,7 @@ export async function POST(request: Request) {
       });
 
       // Create new lead
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await supabase
         .from('leads')
         .insert({
           ...insertData,
@@ -260,9 +258,7 @@ export async function GET(request: Request) {
       brandId
     });
 
-    const supabaseAdmin = createSupabaseAdmin();
-
-    let query = supabaseAdmin.from('leads').select(`
+    let query = supabase.from('leads').select(`
       *,
       brands (brand_name, domain, primary_color)
     `, { count: 'exact' });
