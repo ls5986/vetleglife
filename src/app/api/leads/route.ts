@@ -19,49 +19,82 @@ export async function POST(request: Request) {
 
     const supabaseAdmin = createSupabaseAdmin();
 
+    // Test database connection first
+    console.log('🔍 Testing database connection...');
+    
+    try {
+      const { data: testData, error: testError } = await supabaseAdmin
+        .from('leads')
+        .select('count')
+        .limit(1);
+      
+      if (testError) {
+        console.error('❌ Database connection test failed:', testError);
+        throw new Error(`Database connection failed: ${testError.message}`);
+      }
+      console.log('✅ Database connection successful');
+    } catch (dbTestError) {
+      console.error('❌ Database test error:', dbTestError);
+      throw dbTestError;
+    }
+
     // First, get the actual brand UUID from the brands table
     let actualBrandId = leadData.brand_id;
     if (leadData.brand_id === 'veteran-legacy-life') {
       console.log('🔍 Looking up brand for domain:', leadData.domain);
       
-      const { data: brandData, error: brandError } = await supabaseAdmin
-        .from('brands')
-        .select('id, brand_name, domain')
-        .eq('domain', leadData.domain)
-        .single();
-      
-      if (brandError) {
-        console.error('❌ Error fetching brand:', brandError);
-        // Try to find any active brand as fallback
-        const { data: fallbackBrand, error: fallbackError } = await supabaseAdmin
+      try {
+        const { data: brandData, error: brandError } = await supabaseAdmin
           .from('brands')
           .select('id, brand_name, domain')
-          .eq('is_active', true)
-          .limit(1)
+          .eq('domain', leadData.domain)
           .single();
         
-        if (fallbackBrand) {
-          actualBrandId = fallbackBrand.id;
-          console.log('✅ Using fallback brand:', fallbackBrand.brand_name, fallbackBrand.id);
-        } else {
-          console.error('❌ No fallback brand found:', fallbackError);
+        if (brandError) {
+          console.error('❌ Error fetching brand:', brandError);
+          // Try to find any active brand as fallback
+          const { data: fallbackBrand, error: fallbackError } = await supabaseAdmin
+            .from('brands')
+            .select('id, brand_name, domain')
+            .eq('is_active', true)
+            .limit(1)
+            .single();
+          
+          if (fallbackBrand) {
+            actualBrandId = fallbackBrand.id;
+            console.log('✅ Using fallback brand:', fallbackBrand.brand_name, fallbackBrand.id);
+          } else {
+            console.error('❌ No fallback brand found:', fallbackError);
+            // Use a dummy UUID for now
+            actualBrandId = '00000000-0000-0000-0000-000000000000';
+          }
+        } else if (brandData) {
+          actualBrandId = brandData.id;
+          console.log('✅ Found brand ID:', actualBrandId, 'for domain:', brandData.domain);
         }
-      } else if (brandData) {
-        actualBrandId = brandData.id;
-        console.log('✅ Found brand ID:', actualBrandId, 'for domain:', brandData.domain);
+      } catch (brandLookupError) {
+        console.error('❌ Brand lookup error:', brandLookupError);
+        actualBrandId = '00000000-0000-0000-0000-000000000000';
       }
     }
 
     // Check if lead already exists by session_id
-    const { data: existingLead, error: checkError } = await supabaseAdmin
-      .from('leads')
-      .select('id, current_step, status')
-      .eq('session_id', leadData.session_id)
-      .single();
+    let existingLead = null;
+    try {
+      const { data: checkData, error: checkError } = await supabaseAdmin
+        .from('leads')
+        .select('id, current_step, status')
+        .eq('session_id', leadData.session_id)
+        .single();
 
-    if (checkError && checkError.code !== 'PGRST116') {
-      console.error('❌ Error checking existing lead:', checkError);
-      throw checkError;
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('❌ Error checking existing lead:', checkError);
+        throw checkError;
+      }
+      existingLead = checkData;
+    } catch (checkError) {
+      console.error('❌ Lead check error:', checkError);
+      existingLead = null;
     }
 
     // Start with ONLY the absolute essential fields
