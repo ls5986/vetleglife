@@ -3,14 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-// Regular client for client-side operations (using anon key)
+// Single client for client-side operations (using anon key)
 export const supabase = createClient(
-  supabaseUrl, 
-  supabaseAnonKey
-);
-
-// Client-side admin client (only use anon key for client operations)
-export const supabaseAdmin = createClient(
   supabaseUrl, 
   supabaseAnonKey,
   {

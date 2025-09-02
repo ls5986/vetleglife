@@ -100,19 +100,6 @@ export default function VeteranLifeInsuranceFunnel({ onComplete, onClose }: Vete
     utmCampaign: new URLSearchParams(window.location.search).get('utm_campaign') || ''
   });
 
-  // Exit intent detection
-  useEffect(() => {
-    const handleMouseLeave = (e: MouseEvent) => {
-      if (e.clientY <= 0 && !showExitIntent) {
-        setShowExitIntent(true);
-        setFormData(prev => ({ ...prev, exitIntent: true }));
-      }
-    };
-
-    document.addEventListener('mouseleave', handleMouseLeave);
-    return () => document.removeEventListener('mouseleave', handleMouseLeave);
-  }, [showExitIntent]);
-
   // Auto-advance timer (3 seconds for welcome, 15 seconds for other steps)
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -150,60 +137,77 @@ export default function VeteranLifeInsuranceFunnel({ onComplete, onClose }: Vete
 
       const stepName = getStepName(currentStep);
       
-      // Use existing leads table structure for now
+      // Parse date of birth into separate fields for the database
+      const birthDate = formData.dateOfBirth ? new Date(formData.dateOfBirth) : null;
+      const birthMonth = birthDate ? (birthDate.getMonth() + 1).toString() : '';
+      const birthDay = birthDate ? birthDate.getDate().toString() : '';
+      const birthYear = birthDate ? birthDate.getFullYear().toString() : '';
+      
+      // Map to exact leads table structure
       const leadData = {
         session_id: formData.sessionId,
-        brand_id: 'veteran-legacy-life',
+        brand_id: 'veteran-legacy-life', // This should be the actual UUID from brands table
+        domain: window.location.hostname,
         current_step: currentStep,
-        status: currentStep === TOTAL_STEPS ? 'Completed' : 'Partial',
+        status: currentStep === TOTAL_STEPS ? 'converted' : 'active',
         
-        // Basic Information (existing fields)
+        // Basic Information
         first_name: formData.firstName,
         last_name: formData.lastName,
         email: formData.email,
         phone: formData.phone,
         
-        // Demographics (existing fields)
+        // Demographics
+        state: formData.state,
         military_status: formData.militaryStatus,
         branch_of_service: formData.branchOfService,
-        coverage_amount: formData.coverageAmount ? parseInt(formData.coverageAmount.replace(/[^0-9]/g, '')) : 0,
-        
-        // Additional fields (will be stored in JSON or separate columns)
-        state: formData.state,
         marital_status: formData.maritalStatus,
-        date_of_birth: formData.dateOfBirth,
-        tobacco_use: formData.tobaccoUse,
-        medical_conditions: formData.medicalConditions.join(', '),
+        coverage_amount: formData.coverageAmount ? parseInt(formData.coverageAmount.replace(/[^0-9]/g, '')) : null,
+        
+        // Birth date components
+        birth_month: birthMonth,
+        birth_day: birthDay,
+        birth_year: birthYear,
+        
+        // Medical information
         height: formData.height,
-        weight: formData.weight,
-        hospital_care: formData.hospitalCare,
-        diabetes_medication: formData.diabetesMedication,
+        weight: formData.weight ? parseInt(formData.weight) : null,
+        tobacco_use: formData.tobaccoUse === 'Yes',
+        medical_conditions: formData.medicalConditions,
+        hospital_care: formData.hospitalCare === 'Yes',
+        diabetes_medication: formData.diabetesMedication === 'Yes',
+        
+        // Address and beneficiary
         street_address: formData.streetAddress,
         city: formData.city,
         zip_code: formData.zipCode,
         beneficiary_name: formData.beneficiaryName,
         beneficiary_relationship: formData.beneficiaryRelationship,
         drivers_license: formData.driversLicense,
+        license_state: formData.state, // Using same state as residence
+        
+        // Financial information
         ssn: formData.ssn,
         bank_name: formData.bankName,
         routing_number: formData.routingNumber,
         account_number: formData.accountNumber,
         policy_date: formData.policyDate,
-        transactional_consent: formData.transactionalConsent,
-        marketing_consent: formData.marketingConsent,
         
-        // Marketing & Analytics
-        user_agent: navigator.userAgent,
+        // Tracking and analytics
+        last_activity_at: new Date().toISOString(),
         referrer: document.referrer,
         utm_source: formData.utmSource,
         utm_campaign: formData.utmCampaign,
+        user_agent: navigator.userAgent,
+        ip_address: null, // Will be set by server
         
-        // Exit Intent
-        exit_intent: formData.exitIntent,
-        
-        // Timestamps
-        created_at: new Date().toISOString(),
-        last_activity_at: new Date().toISOString()
+        // Store additional data in form_data JSON field
+        form_data: {
+          transactional_consent: formData.transactionalConsent,
+          marketing_consent: formData.marketingConsent,
+          exit_intent: formData.exitIntent,
+          completed_steps: Array.from({length: currentStep}, (_, i) => i + 1)
+        }
       };
 
       console.log('📤 Sending lead data:', leadData);
@@ -317,6 +321,15 @@ export default function VeteranLifeInsuranceFunnel({ onComplete, onClose }: Vete
     prevStep();
   };
 
+  const handleClose = () => {
+    setShowExitIntent(true);
+  };
+
+  const handleCancelEverything = () => {
+    setShowExitIntent(false);
+    onClose(); // This will close the entire funnel
+  };
+
   const renderStep = () => {
     switch (currentStep) {
       case 1:
@@ -365,9 +378,9 @@ export default function VeteranLifeInsuranceFunnel({ onComplete, onClose }: Vete
       {/* Main Funnel Modal */}
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
         <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto relative">
-          {/* Close button */}
+          {/* Close button - only shows exit intent when clicked */}
           <button
-            onClick={() => setShowExitIntent(true)}
+            onClick={handleClose}
             className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10"
           >
             <X className="h-6 w-6" />
@@ -417,7 +430,7 @@ export default function VeteranLifeInsuranceFunnel({ onComplete, onClose }: Vete
         </div>
       </div>
 
-      {/* Exit Intent Modal */}
+      {/* Exit Intent Modal - only shows when X is clicked */}
       {showExitIntent && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-[60]">
           <div className="bg-white rounded-lg max-w-md w-full p-6 text-center">
@@ -456,12 +469,21 @@ export default function VeteranLifeInsuranceFunnel({ onComplete, onClose }: Vete
               </Button>
             </div>
             
-            <button
-              onClick={() => setShowExitIntent(false)}
-              className="text-gray-500 hover:text-gray-700 mt-4 text-sm underline"
-            >
-              Continue with application
-            </button>
+            <div className="mt-4 space-y-2">
+              <button
+                onClick={() => setShowExitIntent(false)}
+                className="text-gray-500 hover:text-gray-700 text-sm underline"
+              >
+                Continue with application
+              </button>
+              <br />
+              <button
+                onClick={handleCancelEverything}
+                className="text-red-500 hover:text-red-700 text-sm underline"
+              >
+                Cancel everything and close
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -787,6 +809,7 @@ const DiabetesMedicationStep: React.FC<{ formData: VeteranFormData; updateFormDa
           className={`w-full p-4 border-2 rounded-lg ${
             formData.diabetesMedication === answer
               ? 'border-blue-500 bg-blue-50 text-blue-700'
+              : 'border-gray-50 text-blue-700'
               : 'border-gray-300 hover:border-gray-400'
           }`}
         >

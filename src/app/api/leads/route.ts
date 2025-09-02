@@ -19,6 +19,24 @@ export async function POST(request: Request) {
 
     const supabaseAdmin = createSupabaseAdmin();
 
+    // First, get the actual brand UUID from the brands table
+    let actualBrandId = leadData.brand_id;
+    if (leadData.brand_id === 'veteran-legacy-life') {
+      const { data: brandData, error: brandError } = await supabaseAdmin
+        .from('brands')
+        .select('id')
+        .eq('domain', leadData.domain)
+        .single();
+      
+      if (brandError) {
+        console.error('❌ Error fetching brand:', brandError);
+        // Continue with the string ID if brand lookup fails
+      } else if (brandData) {
+        actualBrandId = brandData.id;
+        console.log('✅ Found brand ID:', actualBrandId);
+      }
+    }
+
     // Check if lead already exists by session_id
     const { data: existingLead, error: checkError } = await supabaseAdmin
       .from('leads')
@@ -26,66 +44,78 @@ export async function POST(request: Request) {
       .eq('session_id', leadData.session_id)
       .single();
 
-    if (checkError && checkError.code !== 'PGRST116') {
+    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 means "no rows found"
       console.error('❌ Error checking existing lead:', checkError);
       throw checkError;
     }
 
-    // Prepare data for existing leads table structure
+    // Prepare data for the exact leads table structure
     const insertData = {
       session_id: leadData.session_id,
-      brand_id: leadData.brand_id,
+      brand_id: actualBrandId,
+      domain: leadData.domain,
       current_step: leadData.current_step,
       status: leadData.status,
       
-      // Basic Information (existing fields)
+      // Basic Information
       first_name: leadData.first_name || '',
       last_name: leadData.last_name || '',
       email: leadData.email || '',
       phone: leadData.phone || '',
       
-      // Demographics (existing fields)
+      // Demographics
+      state: leadData.state || '',
       military_status: leadData.military_status || '',
       branch_of_service: leadData.branch_of_service || '',
-      coverage_amount: leadData.coverage_amount || 0,
+      marital_status: leadData.marital_status || '',
+      coverage_amount: leadData.coverage_amount || null,
       
-      // Additional fields (will be stored in existing columns or added as needed)
-      lead_score: 0,
-      lead_grade: 'C',
+      // Birth date components
+      birth_month: leadData.birth_month || '',
+      birth_day: leadData.birth_day || '',
+      birth_year: leadData.birth_year || '',
+      
+      // Medical information
+      height: leadData.height || '',
+      weight: leadData.weight || null,
+      tobacco_use: leadData.tobacco_use || false,
+      medical_conditions: leadData.medical_conditions || [],
+      hospital_care: leadData.hospital_care || false,
+      diabetes_medication: leadData.diabetes_medication || false,
+      
+      // Address and beneficiary
+      street_address: leadData.street_address || '',
+      city: leadData.city || '',
+      zip_code: leadData.zip_code || '',
+      beneficiary_name: leadData.beneficiary_name || '',
+      beneficiary_relationship: leadData.beneficiary_relationship || '',
+      va_clinic_name: leadData.va_clinic_name || null,
+      primary_doctor: leadData.primary_doctor || null,
+      drivers_license: leadData.drivers_license || '',
+      license_state: leadData.license_state || '',
+      
+      // Financial information
+      ssn: leadData.ssn || '',
+      bank_name: leadData.bank_name || '',
+      routing_number: leadData.routing_number || '',
+      account_number: leadData.account_number || '',
+      policy_date: leadData.policy_date || null,
+      
+      // Tracking and analytics
       last_activity_at: new Date().toISOString(),
-      
-      // Marketing & Analytics
+      referrer: leadData.referrer || '',
       utm_source: leadData.utm_source || '',
+      utm_medium: leadData.utm_medium || '',
       utm_campaign: leadData.utm_campaign || '',
+      utm_content: leadData.utm_content || '',
+      utm_term: leadData.utm_term || '',
+      fbclid: leadData.fbclid || '',
+      gclid: leadData.gclid || '',
+      ip_address: leadData.ip_address || null,
+      user_agent: leadData.user_agent || '',
       
-      // Store additional data in a JSON field if available, or use existing columns
-      additional_data: {
-        state: leadData.state,
-        marital_status: leadData.marital_status,
-        date_of_birth: leadData.date_of_birth,
-        tobacco_use: leadData.tobacco_use,
-        medical_conditions: leadData.medical_conditions,
-        height: leadData.height,
-        weight: leadData.weight,
-        hospital_care: leadData.hospital_care,
-        diabetes_medication: leadData.diabetes_medication,
-        street_address: leadData.street_address,
-        city: leadData.city,
-        zip_code: leadData.zip_code,
-        beneficiary_name: leadData.beneficiary_name,
-        beneficiary_relationship: leadData.beneficiary_relationship,
-        drivers_license: leadData.drivers_license,
-        ssn: leadData.ssn,
-        bank_name: leadData.bank_name,
-        routing_number: leadData.routing_number,
-        account_number: leadData.account_number,
-        policy_date: leadData.policy_date,
-        transactional_consent: leadData.transactional_consent,
-        marketing_consent: leadData.marketing_consent,
-        exit_intent: leadData.exit_intent,
-        user_agent: leadData.user_agent,
-        referrer: leadData.referrer
-      }
+      // Store additional data in form_data JSON field
+      form_data: leadData.form_data || {}
     };
 
     let result;
@@ -116,7 +146,7 @@ export async function POST(request: Request) {
     } else {
       console.log('🆕 CREATING new lead:', {
         sessionId: leadData.session_id,
-        brandId: leadData.brand_id,
+        brandId: actualBrandId,
         currentStep: leadData.current_step
       });
 
@@ -145,8 +175,8 @@ export async function POST(request: Request) {
       status: result.status
     });
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       data: result,
       operation: existingLead ? 'updated' : 'created'
     });
@@ -158,11 +188,60 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString()
       },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const sessionId = searchParams.get('session_id');
+    const brandId = searchParams.get('brand_id');
+
+    console.log('🔍 LEAD API GET called:', {
+      timestamp: new Date().toISOString(),
+      sessionId,
+      brandId
+    });
+
+    const supabaseAdmin = createSupabaseAdmin();
+
+    let query = supabaseAdmin.from('leads').select(`
+      *,
+      brands (brand_name, domain, primary_color)
+    `, { count: 'exact' });
+
+    if (sessionId) {
+      query = query.eq('session_id', sessionId);
+    }
+    if (brandId) {
+      query = query.eq('brand_id', brandId);
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('❌ Error fetching leads:', error);
+      throw error;
+    }
+
+    console.log('✅ Leads fetched successfully:', {
+      count: data?.length || 0,
+      sessionId,
+      brandId
+    });
+
+    return NextResponse.json({ success: true, data });
+  } catch (error) {
+    console.error('💥 Error in leads GET API:', error);
+    return NextResponse.json(
+      { success: false, error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
