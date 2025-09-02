@@ -40,8 +40,18 @@ const EntryChoiceStep: React.FC<EntryChoiceStepProps> = ({
             style={{ backgroundColor: brand.primaryColor }}
           >
             <div className="text-left">
-              <div className="font-bold">Complete Application</div>
-              <div className="text-sm opacity-90">Get a personalized quote and apply online</div>
+              <div className="font-bold">Quick Quote</div>
+              <div className="text-sm opacity-90">Get a personalized quote in 5 minutes</div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => onContactOnly({ step: 'full_application', brand: brand.brandName })}
+            className="w-full border-2 border-green-500 text-green-700 py-3 px-6 rounded-lg font-semibold hover:border-green-600 hover:bg-green-50 transition-colors"
+          >
+            <div className="text-left">
+              <div className="font-bold">Complete Full Application</div>
+              <div className="text-sm opacity-90">19-step comprehensive application with medical questions</div>
             </div>
           </button>
 

@@ -25,19 +25,25 @@ export const BRANDS: Brand[] = [
     id: 'veteran-legacy-life',
     domain: 'veteranlegacylife.com',
     brandName: 'Veteran Legacy Life',
-    targetDemographic: 'Veterans',
-    sellingPoint: 'You served your country. Now let us serve your family with the protection and security you deserve.',
-    tagline: 'Honor your service. Secure your legacy.',
-    primaryColor: '#1e3a8a',
-    secondaryColor: '#3b82f6',
-    phone: '(555) 123-4567',
+    targetDemographic: 'Veterans & Active Service Members',
+    sellingPoint: 'Exclusive 2025 life insurance benefits for veterans, active service members, and their families. Get whole life, term life, and IUL coverage with living benefits.',
+    tagline: 'You May Qualify for New Life Insurance Benefits in 2025',
+    primaryColor: '#2563eb',
+    secondaryColor: '#3b6eea',
+    phone: '1-800-VET-INSURANCE',
     email: 'info@veteranlegacylife.com',
     companyName: 'Veteran Legacy Life Insurance',
     isActive: true,
     customFields: {
       militaryStatus: true,
       branchOfService: true,
-      vaBenefits: true
+      vaBenefits: true,
+      heroSubtitle: 'Veterans & Active Service Members',
+      heroTitle: 'You May Qualify for New Life Insurance Benefits in 2025',
+      heroDescription: 'As a resident of your state, you are entitled to check your eligibility for exclusive life insurance benefits designed specifically for our nation\'s heroes.',
+      trustBadge: 'Trusted by 50,000+ Veterans Nationwide',
+      benefitsTitle: 'Plans for Veterans, Active Service and Family Members',
+      comparisonTitle: 'The VA Option vs Our Options... What\'s the difference?'
     }
   },
   {

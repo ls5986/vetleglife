@@ -186,7 +186,8 @@ export default function MultiBrandLanding() {
 
 function BrandCard({ brand }: { brand: Brand }) {
   return (
-    <Card className="hover:shadow-lg transition-shadow duration-300 cursor-pointer group">
+    <Link href={`/${brand.id}`}>
+      <Card className="hover:shadow-lg transition-shadow duration-300 cursor-pointer group">
       <CardHeader className="pb-4">
         <div className="flex justify-between items-start">
           <div>
@@ -219,19 +220,18 @@ function BrandCard({ brand }: { brand: Brand }) {
             <p>{brand.email}</p>
           </div>
           
-          <Link href={`/funnel/${brand.id}`}>
-            <Button 
-              className="group-hover:bg-blue-600 transition-colors"
-              style={{ 
-                backgroundColor: brand.primaryColor,
-                borderColor: brand.primaryColor 
-              }}
-            >
-              Get Quote
-            </Button>
-          </Link>
+          <Button 
+            className="group-hover:bg-blue-600 transition-colors"
+            style={{ 
+              backgroundColor: brand.primaryColor,
+              borderColor: brand.primaryColor 
+            }}
+          >
+            Get Quote
+          </Button>
         </div>
       </CardContent>
     </Card>
+    </Link>
   );
 }
