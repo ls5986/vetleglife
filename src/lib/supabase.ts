@@ -1,17 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 // Regular client for client-side operations (using anon key)
 export const supabase = createClient(
   supabaseUrl, 
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  supabaseAnonKey
 );
 
-// Admin client with service role for full access
+// Client-side admin client (only use anon key for client operations)
 export const supabaseAdmin = createClient(
   supabaseUrl, 
-  process.env.SUPABASE_SERVICE_ROLE_KEY!, 
+  supabaseAnonKey,
   {
     auth: {
       autoRefreshToken: false,
