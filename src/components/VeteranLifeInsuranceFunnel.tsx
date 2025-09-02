@@ -6,34 +6,49 @@ import { Card, CardContent } from '@/components/ui/card';
 import { CheckCircle, ArrowRight, ArrowLeft, Shield, Phone, Mail, Calendar, X, AlertCircle } from 'lucide-react';
 
 interface VeteranFormData {
-  // Basic Info
+  // Pre-qualification
+  state: string;
+  militaryStatus: string;
+  branchOfService: string;
+  maritalStatus: string;
+  coverageAmount: string;
+  
+  // Contact Info
   firstName: string;
   lastName: string;
   email: string;
   phone: string;
   dateOfBirth: string;
-  state: string;
   
-  // Military Info
-  militaryStatus: string;
-  branchOfService: string;
-  yearsOfService: string;
-  dischargeType: string;
-  
-  // Health & Lifestyle
-  height: string;
-  weight: string;
+  // Medical Answers
   tobaccoUse: string;
   medicalConditions: string[];
+  height: string;
+  weight: string;
+  hospitalCare: string;
+  diabetesMedication: string;
   
-  // Coverage
-  coverageAmount: string;
-  policyType: string;
+  // Application Data
+  streetAddress: string;
+  city: string;
+  zipCode: string;
+  beneficiaryName: string;
+  beneficiaryRelationship: string;
+  driversLicense: string;
+  ssn: string;
+  bankName: string;
+  routingNumber: string;
+  accountNumber: string;
+  
+  // Quote Data
+  policyDate: string;
   
   // Session tracking
   sessionId: string;
   currentStep: number;
   exitIntent: boolean;
+  utmSource: string;
+  utmCampaign: string;
 }
 
 interface VeteranFunnelProps {
@@ -41,29 +56,44 @@ interface VeteranFunnelProps {
   onClose: () => void;
 }
 
+const TOTAL_STEPS = 18;
+
 export default function VeteranLifeInsuranceFunnel({ onComplete, onClose }: VeteranFunnelProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [showExitIntent, setShowExitIntent] = useState(false);
   const [formData, setFormData] = useState<VeteranFormData>({
+    state: '',
+    militaryStatus: '',
+    branchOfService: '',
+    maritalStatus: '',
+    coverageAmount: '',
     firstName: '',
     lastName: '',
     email: '',
     phone: '',
     dateOfBirth: '',
-    state: '',
-    militaryStatus: '',
-    branchOfService: '',
-    yearsOfService: '',
-    dischargeType: '',
-    height: '',
-    weight: '',
     tobaccoUse: '',
     medicalConditions: [],
-    coverageAmount: '',
-    policyType: '',
+    height: '',
+    weight: '',
+    hospitalCare: '',
+    diabetesMedication: '',
+    streetAddress: '',
+    city: '',
+    zipCode: '',
+    beneficiaryName: '',
+    beneficiaryRelationship: '',
+    driversLicense: '',
+    ssn: '',
+    bankName: '',
+    routingNumber: '',
+    accountNumber: '',
+    policyDate: '',
     sessionId: generateSessionId(),
     currentStep: 1,
-    exitIntent: false
+    exitIntent: false,
+    utmSource: new URLSearchParams(window.location.search).get('utm_source') || '',
+    utmCampaign: new URLSearchParams(window.location.search).get('utm_campaign') || ''
   });
 
   // Exit intent detection
@@ -83,24 +113,13 @@ export default function VeteranLifeInsuranceFunnel({ onComplete, onClose }: Vete
   useEffect(() => {
     const timer = setTimeout(() => {
       if (currentStep === 1) {
-        // Welcome step - go directly to first question after 3 seconds
         nextStep();
-      } else if (currentStep < 12) {
+      } else if (currentStep < TOTAL_STEPS) {
         nextStep();
       }
     }, currentStep === 1 ? 3000 : 15000);
 
     return () => clearTimeout(timer);
-  }, [currentStep]);
-
-  // Listen for nextStep events from step components
-  useEffect(() => {
-    const handleNextStep = () => {
-      nextStep();
-    };
-
-    window.addEventListener('nextStep', handleNextStep);
-    return () => window.removeEventListener('nextStep', handleNextStep);
   }, [currentStep]);
 
   // Track progress in database
@@ -114,6 +133,17 @@ export default function VeteranLifeInsuranceFunnel({ onComplete, onClose }: Vete
 
   async function updateSessionProgress() {
     try {
+      console.log('📊 Updating session progress:', {
+        sessionId: formData.sessionId,
+        currentStep,
+        stepName: getStepName(currentStep),
+        hasEmail: !!formData.email,
+        hasPhone: !!formData.phone,
+        exitIntent: formData.exitIntent
+      });
+
+      const stepName = getStepName(currentStep);
+      
       const response = await fetch('/api/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -122,41 +152,107 @@ export default function VeteranLifeInsuranceFunnel({ onComplete, onClose }: Vete
             session_id: formData.sessionId,
             brand_id: 'veteran-legacy-life',
             current_step: currentStep,
-            // Map to the fields the admin dashboard expects
+            step_name: stepName,
+            form_type: currentStep === TOTAL_STEPS ? 'Completed' : 'Partial',
+            status: currentStep === TOTAL_STEPS ? 'Completed' : 'Partial',
+            
+            // Basic Information
             first_name: formData.firstName,
             last_name: formData.lastName,
             email: formData.email,
             phone: formData.phone,
             date_of_birth: formData.dateOfBirth,
+            
+            // Consent
+            transactional_consent: true,
+            marketing_consent: true,
+            
+            // Demographics
             state: formData.state,
             military_status: formData.militaryStatus,
             branch_of_service: formData.branchOfService,
-            years_of_service: formData.yearsOfService,
-            discharge_type: formData.dischargeType,
-            height: formData.height,
-            weight: formData.weight,
+            marital_status: formData.maritalStatus,
+            
+            // Coverage & Health
+            coverage_amount: formData.coverageAmount,
             tobacco_use: formData.tobaccoUse,
             medical_conditions: formData.medicalConditions,
-            coverage_amount: formData.coverageAmount,
-            policy_type: formData.policyType,
-            // Additional fields for admin dashboard
-            status: 'active',
-            lead_score: Math.min(currentStep * 10, 100),
-            lead_grade: currentStep >= 6 ? 'A' : currentStep >= 4 ? 'B' : currentStep >= 2 ? 'C' : 'D',
-            last_activity_at: new Date().toISOString(),
-            utm_source: '',
-            utm_campaign: '',
+            height: formData.height,
+            weight: formData.weight,
+            hospital_care: formData.hospitalCare,
+            diabetes_medication: formData.diabetesMedication,
+            
+            // Address
+            street_address: formData.streetAddress,
+            city: formData.city,
+            application_state: formData.state,
+            zip_code: formData.zipCode,
+            
+            // Additional Fields
+            driver_license: formData.driversLicense,
+            
+            // Marketing & Analytics
+            user_agent: navigator.userAgent,
+            referrer: document.referrer,
+            utm_source: formData.utmSource,
+            utm_campaign: formData.utmCampaign,
+            
+            // Exit Intent
             exit_intent: formData.exitIntent,
-            created_at: new Date().toISOString()
+            
+            // Timestamps
+            created_at: new Date().toISOString(),
+            last_activity: new Date().toISOString()
           }
         })
       });
       
       if (!response.ok) {
-        console.error('Failed to update session progress');
+        const errorText = await response.text();
+        console.error('❌ Failed to update session progress:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText
+        });
+      } else {
+        const result = await response.json();
+        console.log('✅ Session progress updated successfully:', {
+          sessionId: formData.sessionId,
+          currentStep,
+          stepName,
+          result: result.operation
+        });
       }
     } catch (error) {
-      console.error('Error updating session progress:', error);
+      console.error('💥 Error updating session progress:', {
+        sessionId: formData.sessionId,
+        currentStep,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
+
+  function getStepName(step: number): string {
+    switch (step) {
+      case 1: return 'State Selection';
+      case 2: return 'Military Status';
+      case 3: return 'Branch of Service';
+      case 4: return 'Marital Status';
+      case 5: return 'Coverage Amount';
+      case 6: return 'Contact Info';
+      case 7: return 'Birthday';
+      case 8: return 'Tobacco Use';
+      case 9: return 'Medical Conditions';
+      case 10: return 'Height & Weight';
+      case 11: return 'Hospital Care';
+      case 12: return 'Diabetes Medication';
+      case 13: return 'Loading Screen';
+      case 14: return 'Pre-Qualified Success';
+      case 15: return 'IUL Quote Modal';
+      case 16: return 'Application Step 1';
+      case 17: return 'Application Step 2';
+      case 18: return 'Final Success';
+      default: return `Step ${step}`;
     }
   }
 
@@ -165,7 +261,7 @@ export default function VeteranLifeInsuranceFunnel({ onComplete, onClose }: Vete
   };
 
   const nextStep = () => {
-    if (currentStep < 12) {
+    if (currentStep < TOTAL_STEPS) {
       setCurrentStep(prev => prev + 1);
       updateFormData({ currentStep: currentStep + 1 });
     }
@@ -178,32 +274,78 @@ export default function VeteranLifeInsuranceFunnel({ onComplete, onClose }: Vete
     }
   };
 
+  const canGoNext = () => {
+    switch (currentStep) {
+      case 1: return !!formData.state;
+      case 2: return !!formData.militaryStatus;
+      case 3: return !!formData.branchOfService;
+      case 4: return !!formData.maritalStatus;
+      case 5: return !!formData.coverageAmount;
+      case 6: return !!(formData.firstName && formData.lastName && formData.email && formData.phone);
+      case 7: return !!formData.dateOfBirth;
+      case 8: return !!formData.tobaccoUse;
+      case 9: return formData.medicalConditions.length > 0;
+      case 10: return !!(formData.height && formData.weight);
+      case 11: return !!formData.hospitalCare;
+      case 12: return !!formData.diabetesMedication;
+      case 13: return false; // Loading step
+      case 14: return true; // Success step
+      case 15: return true; // IUL Quote Modal
+      case 16: return !!(formData.streetAddress && formData.city && formData.zipCode && formData.beneficiaryName && formData.beneficiaryRelationship && formData.driversLicense);
+      case 17: return !!(formData.ssn && formData.bankName && formData.routingNumber && formData.accountNumber && formData.policyDate);
+      case 18: return true; // Final success
+      default: return true;
+    }
+  };
+
+  const handleNext = () => {
+    if (canGoNext()) {
+      nextStep();
+    }
+  };
+
+  const handleBack = () => {
+    prevStep();
+  };
+
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-        return <WelcomeStep />;
+        return <StateSelectionStep formData={formData} updateFormData={updateFormData} />;
       case 2:
         return <MilitaryStatusStep formData={formData} updateFormData={updateFormData} />;
       case 3:
         return <BranchOfServiceStep formData={formData} updateFormData={updateFormData} />;
       case 4:
-        return <BasicInfoStep formData={formData} updateFormData={updateFormData} />;
+        return <MaritalStatusStep formData={formData} updateFormData={updateFormData} />;
       case 5:
-        return <ContactInfoStep formData={formData} updateFormData={updateFormData} />;
+        return <CoverageAmountStep formData={formData} updateFormData={updateFormData} />;
       case 6:
-        return <HealthInfoStep formData={formData} updateFormData={updateFormData} />;
+        return <ContactInfoStep formData={formData} updateFormData={updateFormData} />;
       case 7:
-        return <CoverageStep formData={formData} updateFormData={updateFormData} />;
+        return <BirthdayStep formData={formData} updateFormData={updateFormData} />;
       case 8:
-        return <QuoteStep formData={formData} />;
+        return <TobaccoUseStep formData={formData} updateFormData={updateFormData} />;
       case 9:
-        return <LoadingStep />;
+        return <MedicalConditionsStep formData={formData} updateFormData={updateFormData} />;
       case 10:
-        return <PreQualifiedStep />;
+        return <HeightWeightStep formData={formData} updateFormData={updateFormData} />;
       case 11:
-        return <AgentHandoffStep formData={formData} />;
+        return <HospitalCareStep formData={formData} updateFormData={updateFormData} />;
       case 12:
-        return <FinalStep formData={formData} onComplete={onComplete} />;
+        return <DiabetesMedicationStep formData={formData} updateFormData={updateFormData} />;
+      case 13:
+        return <LoadingStep />;
+      case 14:
+        return <PreQualifiedSuccessStep />;
+      case 15:
+        return <IULQuoteStep formData={formData} />;
+      case 16:
+        return <ApplicationStep1 formData={formData} updateFormData={updateFormData} />;
+      case 17:
+        return <ApplicationStep2 formData={formData} updateFormData={updateFormData} />;
+      case 18:
+        return <FinalSuccessStep formData={formData} onComplete={onComplete} />;
       default:
         return <div>Step not found</div>;
     }
@@ -224,33 +366,42 @@ export default function VeteranLifeInsuranceFunnel({ onComplete, onClose }: Vete
 
           <div className="p-6">
             {/* Progress Bar */}
-            <div className="mb-6">
-              <div className="flex justify-between text-sm text-gray-500 mb-2">
-                <span>Step {currentStep} of 12</span>
-                <span>{Math.round((currentStep / 12) * 100)}%</span>
+            {currentStep !== 13 && (
+              <div className="mb-6">
+                <div className="flex justify-between text-sm text-gray-500 mb-2">
+                  <span>Step {currentStep} of {TOTAL_STEPS}</span>
+                  <span>{Math.round((currentStep / TOTAL_STEPS) * 100)}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${(currentStep / TOTAL_STEPS) * 100}%` }}
+                  ></div>
+                </div>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${(currentStep / 12) * 100}%` }}
-                ></div>
-              </div>
-            </div>
+            )}
 
             {/* Step Content */}
             {renderStep()}
 
             {/* Navigation */}
-            {currentStep > 1 && currentStep < 12 && (
+            {currentStep !== 13 && currentStep !== 15 && (
               <div className="flex justify-between mt-6">
-                <Button onClick={prevStep} variant="outline">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back
-                </Button>
-                <Button onClick={nextStep}>
-                  Next
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
+                {currentStep > 1 && (
+                  <Button onClick={handleBack} variant="outline">
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back
+                  </Button>
+                )}
+                
+                <div className="flex-1"></div>
+                
+                {currentStep < TOTAL_STEPS && (
+                  <Button onClick={handleNext} disabled={!canGoNext()}>
+                    {currentStep === TOTAL_STEPS - 1 ? 'Submit' : 'Continue'}
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                )}
               </div>
             )}
           </div>
@@ -309,56 +460,40 @@ export default function VeteranLifeInsuranceFunnel({ onComplete, onClose }: Vete
   );
 }
 
-// Step Components
-const WelcomeStep: React.FC = () => (
+// Step Components - I'll create these in the next message to match your exact structure
+const StateSelectionStep: React.FC<{ formData: VeteranFormData; updateFormData: (data: Partial<VeteranFormData>) => void }> = ({ formData, updateFormData }) => (
   <div className="space-y-6 text-center">
-    <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
-      <Shield className="h-10 w-10 text-blue-600" />
-    </div>
-    <h2 className="text-3xl font-bold text-gray-900">Veteran Life Insurance Eligibility Check</h2>
-    <p className="text-lg text-gray-600">
-      Complete this quick 2-minute form to see if you qualify for exclusive veteran life insurance benefits.
-    </p>
-    <div className="bg-blue-50 p-4 rounded-lg">
-      <p className="text-blue-800 font-medium">
-        ✓ No medical exam required for initial quote<br/>
-        ✓ Exclusive rates for veterans<br/>
-        ✓ Quick 2-minute process
-      </p>
-    </div>
-    <p className="text-sm text-gray-500">Starting in 3 seconds...</p>
+    <h2 className="text-2xl font-bold text-gray-900">Select Your State</h2>
+    <p className="text-gray-600">Choose your state of residence</p>
+    <select
+      value={formData.state}
+      onChange={(e) => updateFormData({ state: e.target.value })}
+      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+    >
+      <option value="">Select your state</option>
+      {['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'].map(state => (
+        <option key={state} value={state}>{state}</option>
+      ))}
+    </select>
   </div>
 );
 
 const MilitaryStatusStep: React.FC<{ formData: VeteranFormData; updateFormData: (data: Partial<VeteranFormData>) => void }> = ({ formData, updateFormData }) => (
-  <div className="space-y-6">
-    <div className="text-center">
-      <h2 className="text-2xl font-bold text-gray-900 mb-4">Military Service Status</h2>
-      <p className="text-gray-600">Tell us about your military service to unlock exclusive benefits.</p>
-    </div>
-    
+  <div className="space-y-6 text-center">
+    <h2 className="text-2xl font-bold text-gray-900">Military Service Status</h2>
+    <p className="text-gray-600">Tell us about your military service</p>
     <div className="space-y-3">
       {['Active Duty', 'Veteran', 'Reserve/Guard', 'Spouse', 'None'].map((status) => (
         <button
           key={status}
-          onClick={() => {
-            updateFormData({ militaryStatus: status });
-            setTimeout(() => window.dispatchEvent(new CustomEvent('nextStep')), 1000);
-          }}
-          className={`w-full p-4 border-2 rounded-lg text-left transition-colors ${
+          onClick={() => updateFormData({ militaryStatus: status })}
+          className={`w-full p-4 border-2 rounded-lg ${
             formData.militaryStatus === status
               ? 'border-blue-500 bg-blue-50 text-blue-700'
               : 'border-gray-300 hover:border-gray-400'
           }`}
         >
-          <div className="font-semibold">{status}</div>
-          <div className="text-sm opacity-75">
-            {status === 'Active Duty' && 'Currently serving in the military'}
-            {status === 'Veteran' && 'Honorably discharged from military service'}
-            {status === 'Reserve/Guard' && 'Currently serving in reserves or guard'}
-            {status === 'Spouse' && 'Spouse of active duty or veteran'}
-            {status === 'None' && 'No military service'}
-          </div>
+          {status}
         </button>
       ))}
     </div>
@@ -366,38 +501,76 @@ const MilitaryStatusStep: React.FC<{ formData: VeteranFormData; updateFormData: 
 );
 
 const BranchOfServiceStep: React.FC<{ formData: VeteranFormData; updateFormData: (data: Partial<VeteranFormData>) => void }> = ({ formData, updateFormData }) => (
-  <div className="space-y-6">
-    <div className="text-center">
-      <h2 className="text-2xl font-bold text-gray-900 mb-4">Branch of Service</h2>
-      <p className="text-gray-600">Which branch did you serve in?</p>
-    </div>
-    
+  <div className="space-y-6 text-center">
+    <h2 className="text-2xl font-bold text-gray-900">Branch of Service</h2>
+    <p className="text-gray-600">Which branch did you serve in?</p>
     <div className="grid grid-cols-2 gap-3">
       {['Army', 'Navy', 'Air Force', 'Marines', 'Coast Guard', 'Space Force'].map((branch) => (
         <button
           key={branch}
-          onClick={() => {
-            updateFormData({ branchOfService: branch });
-            setTimeout(() => window.dispatchEvent(new CustomEvent('nextStep')), 1000);
-          }}
-          className={`p-4 border-2 rounded-lg text-center transition-colors ${
+          onClick={() => updateFormData({ branchOfService: branch })}
+          className={`p-4 border-2 rounded-lg ${
             formData.branchOfService === branch
               ? 'border-blue-500 bg-blue-50 text-blue-700'
               : 'border-gray-300 hover:border-gray-400'
           }`}
         >
-          <div className="font-semibold">{branch}</div>
+          {branch}
         </button>
       ))}
     </div>
   </div>
 );
 
-const BasicInfoStep: React.FC<{ formData: VeteranFormData; updateFormData: (data: Partial<VeteranFormData>) => void }> = ({ formData, updateFormData }) => (
+const MaritalStatusStep: React.FC<{ formData: VeteranFormData; updateFormData: (data: Partial<VeteranFormData>) => void }> = ({ formData, updateFormData }) => (
+  <div className="space-y-6 text-center">
+    <h2 className="text-2xl font-bold text-gray-900">Marital Status</h2>
+    <p className="text-gray-600">What is your current marital status?</p>
+    <div className="space-y-3">
+      {['Single', 'Married', 'Divorced', 'Widowed'].map((status) => (
+        <button
+          key={status}
+          onClick={() => updateFormData({ maritalStatus: status })}
+          className={`w-full p-4 border-2 rounded-lg ${
+            formData.maritalStatus === status
+              ? 'border-blue-500 bg-blue-50 text-blue-700'
+              : 'border-gray-300 hover:border-gray-400'
+          }`}
+        >
+          {status}
+        </button>
+      ))}
+    </div>
+  </div>
+);
+
+const CoverageAmountStep: React.FC<{ formData: VeteranFormData; updateFormData: (data: Partial<VeteranFormData>) => void }> = ({ formData, updateFormData }) => (
+  <div className="space-y-6 text-center">
+    <h2 className="text-2xl font-bold text-gray-900">Coverage Amount</h2>
+    <p className="text-gray-600">How much coverage do you need?</p>
+    <div className="space-y-3">
+      {['$10,000', '$25,000', '$50,000', '$100,000', '$250,000', '$500,000', '$1,000,000+'].map((amount) => (
+        <button
+          key={amount}
+          onClick={() => updateFormData({ coverageAmount: amount })}
+          className={`w-full p-4 border-2 rounded-lg ${
+            formData.coverageAmount === amount
+              ? 'border-blue-500 bg-blue-50 text-blue-700'
+              : 'border-gray-300 hover:border-gray-400'
+          }`}
+        >
+          {amount}
+        </button>
+      ))}
+    </div>
+  </div>
+);
+
+const ContactInfoStep: React.FC<{ formData: VeteranFormData; updateFormData: (data: Partial<VeteranFormData>) => void }> = ({ formData, updateFormData }) => (
   <div className="space-y-6">
     <div className="text-center">
-      <h2 className="text-2xl font-bold text-gray-900 mb-4">Basic Information</h2>
-      <p className="text-gray-600">Let's start with your basic details.</p>
+      <h2 className="text-2xl font-bold text-gray-900">Contact Information</h2>
+      <p className="text-gray-600">We'll use this to send you your personalized quote</p>
     </div>
     
     <div className="space-y-4">
@@ -408,8 +581,8 @@ const BasicInfoStep: React.FC<{ formData: VeteranFormData; updateFormData: (data
             type="text"
             value={formData.firstName}
             onChange={(e) => updateFormData({ firstName: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Enter first name"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            placeholder="First Name"
           />
         </div>
         <div>
@@ -418,74 +591,101 @@ const BasicInfoStep: React.FC<{ formData: VeteranFormData; updateFormData: (data
             type="text"
             value={formData.lastName}
             onChange={(e) => updateFormData({ lastName: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Enter last name"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            placeholder="Last Name"
           />
         </div>
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth</label>
-        <input
-          type="date"
-          value={formData.dateOfBirth}
-          onChange={(e) => updateFormData({ dateOfBirth: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
-    </div>
-  </div>
-);
-
-const ContactInfoStep: React.FC<{ formData: VeteranFormData; updateFormData: (data: Partial<VeteranFormData>) => void }> = ({ formData, updateFormData }) => (
-  <div className="space-y-6">
-    <div className="text-center">
-      <h2 className="text-2xl font-bold text-gray-900 mb-4">Contact Information</h2>
-      <p className="text-gray-600">We'll use this to send you your personalized quote.</p>
-    </div>
-    
-    <div className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
         <input
           type="email"
           value={formData.email}
           onChange={(e) => updateFormData({ email: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Enter your email"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+          placeholder="Email Address"
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
         <input
           type="tel"
           value={formData.phone}
           onChange={(e) => updateFormData({ phone: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Enter your phone number"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+          placeholder="Phone Number"
         />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">State of Residence</label>
-        <select
-          value={formData.state}
-          onChange={(e) => updateFormData({ state: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="">Select your state</option>
-          {['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'].map(state => (
-            <option key={state} value={state}>{state}</option>
-          ))}
-        </select>
       </div>
     </div>
   </div>
 );
 
-const HealthInfoStep: React.FC<{ formData: VeteranFormData; updateFormData: (data: Partial<VeteranFormData>) => void }> = ({ formData, updateFormData }) => (
+const BirthdayStep: React.FC<{ formData: VeteranFormData; updateFormData: (data: Partial<VeteranFormData>) => void }> = ({ formData, updateFormData }) => (
+  <div className="space-y-6 text-center">
+    <h2 className="text-2xl font-bold text-gray-900">Date of Birth</h2>
+    <p className="text-gray-600">This helps us calculate your personalized rates</p>
+    <input
+      type="date"
+      value={formData.dateOfBirth}
+      onChange={(e) => updateFormData({ dateOfBirth: e.target.value })}
+      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+    />
+  </div>
+);
+
+const TobaccoUseStep: React.FC<{ formData: VeteranFormData; updateFormData: (data: Partial<VeteranFormData>) => void }> = ({ formData, updateFormData }) => (
+  <div className="space-y-6 text-center">
+    <h2 className="text-2xl font-bold text-gray-900">Tobacco Use</h2>
+    <p className="text-gray-600">Do you use tobacco products?</p>
+    <div className="space-y-3">
+      {['Yes', 'No'].map((answer) => (
+        <button
+          key={answer}
+          onClick={() => updateFormData({ tobaccoUse: answer })}
+          className={`w-full p-4 border-2 rounded-lg ${
+            formData.tobaccoUse === answer
+              ? 'border-blue-500 bg-blue-50 text-blue-700'
+              : 'border-gray-300 hover:border-gray-400'
+          }`}
+        >
+          {answer}
+        </button>
+      ))}
+    </div>
+  </div>
+);
+
+const MedicalConditionsStep: React.FC<{ formData: VeteranFormData; updateFormData: (data: Partial<VeteranFormData>) => void }> = ({ formData, updateFormData }) => (
+  <div className="space-y-6 text-center">
+    <h2 className="text-2xl font-bold text-gray-900">Medical Conditions</h2>
+    <p className="text-gray-600">Do you have any of the following conditions?</p>
+    <div className="space-y-3">
+      {['Diabetes', 'Heart Disease', 'Cancer', 'High Blood Pressure', 'None'].map((condition) => (
+        <label key={condition} className="flex items-center space-x-3">
+          <input
+            type="checkbox"
+            checked={formData.medicalConditions.includes(condition)}
+            onChange={(e) => {
+              if (e.target.checked) {
+                updateFormData({ medicalConditions: [...formData.medicalConditions, condition] });
+              } else {
+                updateFormData({ medicalConditions: formData.medicalConditions.filter(c => c !== condition) });
+              }
+            }}
+            className="rounded"
+          />
+          <span>{condition}</span>
+        </label>
+      ))}
+    </div>
+  </div>
+);
+
+const HeightWeightStep: React.FC<{ formData: VeteranFormData; updateFormData: (data: Partial<VeteranFormData>) => void }> = ({ formData, updateFormData }) => (
   <div className="space-y-6">
     <div className="text-center">
-      <h2 className="text-2xl font-bold text-gray-900 mb-4">Health Information</h2>
-      <p className="text-gray-600">This helps us provide accurate quotes.</p>
+      <h2 className="text-2xl font-bold text-gray-900">Height & Weight</h2>
+      <p className="text-gray-600">This helps us calculate your rates accurately</p>
     </div>
     
     <div className="space-y-4">
@@ -496,7 +696,7 @@ const HealthInfoStep: React.FC<{ formData: VeteranFormData; updateFormData: (dat
             type="number"
             value={formData.height}
             onChange={(e) => updateFormData({ height: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md"
             placeholder="68"
           />
         </div>
@@ -506,67 +706,81 @@ const HealthInfoStep: React.FC<{ formData: VeteranFormData; updateFormData: (dat
             type="number"
             value={formData.weight}
             onChange={(e) => updateFormData({ weight: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md"
             placeholder="150"
           />
-        </div>
-      </div>
-      
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Tobacco Use</label>
-        <div className="space-y-2">
-          {['Yes', 'No'].map((answer) => (
-            <label key={answer} className="flex items-center space-x-3">
-              <input
-                type="radio"
-                name="tobaccoUse"
-                value={answer}
-                checked={formData.tobaccoUse === answer}
-                onChange={(e) => updateFormData({ tobaccoUse: e.target.value })}
-              />
-              <span>{answer}</span>
-            </label>
-          ))}
         </div>
       </div>
     </div>
   </div>
 );
 
-const CoverageStep: React.FC<{ formData: VeteranFormData; updateFormData: (data: Partial<VeteranFormData>) => void }> = ({ formData, updateFormData }) => (
-  <div className="space-y-6">
-    <div className="text-center">
-      <h2 className="text-2xl font-bold text-gray-900 mb-4">Coverage Amount</h2>
-      <p className="text-gray-600">How much coverage do you need?</p>
-    </div>
-    
+const HospitalCareStep: React.FC<{ formData: VeteranFormData; updateFormData: (data: Partial<VeteranFormData>) => void }> = ({ formData, updateFormData }) => (
+  <div className="space-y-6 text-center">
+    <h2 className="text-2xl font-bold text-gray-900">Hospital Care</h2>
+    <p className="text-gray-600">Have you been hospitalized in the last 5 years?</p>
     <div className="space-y-3">
-      {['$100,000', '$250,000', '$500,000', '$1,000,000', '$2,000,000+'].map((amount) => (
-        <label key={amount} className="flex items-center space-x-3">
-          <input
-            type="radio"
-            name="coverageAmount"
-            value={amount}
-            checked={formData.coverageAmount === amount}
-            onChange={(e) => {
-              updateFormData({ coverageAmount: e.target.value });
-              setTimeout(() => window.dispatchEvent(new CustomEvent('nextStep')), 1000);
-            }}
-          />
-          <span className="font-semibold">{amount}</span>
-        </label>
+      {['Yes', 'No'].map((answer) => (
+        <button
+          key={answer}
+          onClick={() => updateFormData({ hospitalCare: answer })}
+          className={`w-full p-4 border-2 rounded-lg ${
+            formData.hospitalCare === answer
+              ? 'border-blue-500 bg-blue-50 text-blue-700'
+              : 'border-gray-300 hover:border-gray-400'
+          }`}
+        >
+          {answer}
+        </button>
       ))}
     </div>
   </div>
 );
 
-const QuoteStep: React.FC<{ formData: VeteranFormData }> = ({ formData }) => (
-  <div className="space-y-6">
-    <div className="text-center">
-      <h2 className="text-2xl font-bold text-gray-900 mb-4">Your Veteran Quote</h2>
-      <p className="text-gray-600">Based on your information, here's your estimated premium.</p>
+const DiabetesMedicationStep: React.FC<{ formData: VeteranFormData; updateFormData: (data: Partial<VeteranFormData>) => void }> = ({ formData, updateFormData }) => (
+  <div className="space-y-6 text-center">
+    <h2 className="text-2xl font-bold text-gray-900">Diabetes Medication</h2>
+    <p className="text-gray-600">Do you take medication for diabetes?</p>
+    <div className="space-y-3">
+      {['Yes', 'No'].map((answer) => (
+        <button
+          key={answer}
+          onClick={() => updateFormData({ diabetesMedication: answer })}
+          className={`w-full p-4 border-2 rounded-lg ${
+            formData.diabetesMedication === answer
+              ? 'border-blue-500 bg-blue-50 text-blue-700'
+              : 'border-gray-300 hover:border-gray-400'
+          }`}
+        >
+          {answer}
+        </button>
+      ))}
     </div>
-    
+  </div>
+);
+
+const LoadingStep: React.FC = () => (
+  <div className="space-y-6 text-center">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+    <h2 className="text-2xl font-bold">Processing Your Application</h2>
+    <p className="text-gray-600">Please wait while we review your information...</p>
+  </div>
+);
+
+const PreQualifiedSuccessStep: React.FC = () => (
+  <div className="space-y-6 text-center">
+    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+      <CheckCircle className="h-8 w-8 text-green-600" />
+    </div>
+    <h2 className="text-2xl font-bold">Pre-Qualified!</h2>
+    <p className="text-gray-600">Congratulations! You've been pre-qualified for veteran life insurance coverage.</p>
+  </div>
+);
+
+const IULQuoteStep: React.FC<{ formData: VeteranFormData }> = ({ formData }) => (
+  <div className="space-y-6 text-center">
+    <h2 className="text-2xl font-bold text-gray-900">Your IUL Quote</h2>
+    <p className="text-gray-600">Based on your information, here's your estimated premium</p>
     <Card>
       <CardContent className="pt-6">
         <div className="text-center space-y-4">
@@ -580,48 +794,146 @@ const QuoteStep: React.FC<{ formData: VeteranFormData }> = ({ formData }) => (
   </div>
 );
 
-const LoadingStep: React.FC = () => {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('nextStep'));
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, []);
-
-  return (
-    <div className="space-y-6 text-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-      <h2 className="text-2xl font-bold">Processing Your Application</h2>
-      <p className="text-gray-600">Please wait while we review your information...</p>
+const ApplicationStep1: React.FC<{ formData: VeteranFormData; updateFormData: (data: Partial<VeteranFormData>) => void }> = ({ formData, updateFormData }) => (
+  <div className="space-y-6">
+    <div className="text-center">
+      <h2 className="text-2xl font-bold text-gray-900">Application Step 1</h2>
+      <p className="text-gray-600">Let's complete your application</p>
     </div>
-  );
-};
-
-const PreQualifiedStep: React.FC = () => (
-  <div className="space-y-6 text-center">
-    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-      <CheckCircle className="h-8 w-8 text-green-600" />
+    
+    <div className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Street Address</label>
+        <input
+          type="text"
+          value={formData.streetAddress}
+          onChange={(e) => updateFormData({ streetAddress: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+          placeholder="Street Address"
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
+          <input
+            type="text"
+            value={formData.city}
+            onChange={(e) => updateFormData({ city: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            placeholder="City"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">ZIP Code</label>
+          <input
+            type="text"
+            value={formData.zipCode}
+            onChange={(e) => updateFormData({ zipCode: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            placeholder="ZIP Code"
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Beneficiary Name</label>
+          <input
+            type="text"
+            value={formData.beneficiaryName}
+            onChange={(e) => updateFormData({ beneficiaryName: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            placeholder="Beneficiary Name"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Relationship</label>
+          <input
+            type="text"
+            value={formData.beneficiaryRelationship}
+            onChange={(e) => updateFormData({ beneficiaryRelationship: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            placeholder="Relationship"
+          />
+        </div>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Driver's License</label>
+        <input
+          type="text"
+          value={formData.driversLicense}
+          onChange={(e) => updateFormData({ driversLicense: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+          placeholder="Driver's License Number"
+        />
+      </div>
     </div>
-    <h2 className="text-2xl font-bold">Pre-Qualified!</h2>
-    <p className="text-gray-600">Congratulations! You've been pre-qualified for veteran life insurance coverage.</p>
   </div>
 );
 
-const AgentHandoffStep: React.FC<{ formData: VeteranFormData }> = ({ formData }) => (
-  <div className="space-y-6 text-center">
-    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
-      <Phone className="h-8 w-8 text-blue-600" />
+const ApplicationStep2: React.FC<{ formData: VeteranFormData; updateFormData: (data: Partial<VeteranFormData>) => void }> = ({ formData, updateFormData }) => (
+  <div className="space-y-6">
+    <div className="text-center">
+      <h2 className="text-2xl font-bold text-gray-900">Application Step 2</h2>
+      <p className="text-gray-600">Almost done! Just a few more details</p>
     </div>
-    <h2 className="text-2xl font-bold">Agent Contact</h2>
-    <p className="text-gray-600">A licensed agent will contact you within 24 hours to finalize your policy.</p>
-    <div className="text-sm text-gray-500">
-      <p>Phone: {formData.phone}</p>
-      <p>Email: {formData.email}</p>
+    
+    <div className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Social Security Number</label>
+        <input
+          type="text"
+          value={formData.ssn}
+          onChange={(e) => updateFormData({ ssn: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+          placeholder="SSN"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Bank Name</label>
+        <input
+          type="text"
+          value={formData.bankName}
+          onChange={(e) => updateFormData({ bankName: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+          placeholder="Bank Name"
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Routing Number</label>
+          <input
+            type="text"
+            value={formData.routingNumber}
+            onChange={(e) => updateFormData({ routingNumber: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            placeholder="Routing Number"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Account Number</label>
+          <input
+            type="text"
+            value={formData.accountNumber}
+            onChange={(e) => updateFormData({ accountNumber: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            placeholder="Account Number"
+          />
+        </div>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Policy Date</label>
+        <input
+          type="date"
+          value={formData.policyDate}
+          onChange={(e) => updateFormData({ policyDate: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+        />
+      </div>
     </div>
   </div>
 );
 
-const FinalStep: React.FC<{ formData: VeteranFormData; onComplete: (data: VeteranFormData) => void }> = ({ formData, onComplete }) => (
+const FinalSuccessStep: React.FC<{ formData: VeteranFormData; onComplete: (data: VeteranFormData) => void }> = ({ formData, onComplete }) => (
   <div className="space-y-6 text-center">
     <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
       <CheckCircle className="h-8 w-8 text-green-600" />
