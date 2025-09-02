@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createSupabaseAdmin } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -57,15 +56,14 @@ export default function LeadsPage() {
 
   const loadBrands = async () => {
     try {
-      const supabaseAdmin = createSupabaseAdmin();
-      const { data, error } = await supabaseAdmin
-        .from('brands')
-        .select('*')
-        .eq('is_active', true)
-        .order('brand_name');
+      const response = await fetch('/api/admin/brands');
+      const result = await response.json();
       
-      if (error) throw error;
-      setBrands(data || []);
+      if (result.success) {
+        setBrands(result.data || []);
+      } else {
+        console.error('Error loading brands:', result.error);
+      }
     } catch (error) {
       console.error('Error loading brands:', error);
     }
@@ -75,38 +73,24 @@ export default function LeadsPage() {
     try {
       setLoading(true);
       
-      const supabaseAdmin = createSupabaseAdmin();
+      // Build query parameters
+      const params = new URLSearchParams();
+      if (statusFilter !== 'all') params.append('status', statusFilter);
+      if (brandFilter !== 'all') params.append('brand_id', brandFilter);
+      params.append('page', currentPage.toString());
       
-      let query = supabaseAdmin
-        .from('leads')
-        .select(`
-          *,
-          brands (brand_name, domain, primary_color)
-        `, { count: 'exact' });
-
-      // Apply filters
-      if (statusFilter !== 'all') {
-        query = query.eq('status', statusFilter);
+      const response = await fetch(`/api/admin/leads?${params.toString()}`);
+      const result = await response.json();
+      
+      if (result.success) {
+        setLeads(result.data || []);
+        setTotalLeads(result.totalCount || 0);
+      } else {
+        console.error('Error loading leads:', result.error);
       }
-      if (brandFilter !== 'all') {
-        query = query.eq('brand_id', brandFilter);
-      }
-
-      // Apply pagination
-      const from = (currentPage - 1) * leadsPerPage;
-      const to = from + leadsPerPage - 1;
-      
-      const { data, error, count } = await query
-        .order('created_at', { ascending: false })
-        .range(from, to);
-
-      if (error) throw error;
-      
-      setLeads(data || []);
-      setTotalLeads(count || 0);
-      setLoading(false);
     } catch (error) {
       console.error('Error loading leads:', error);
+    } finally {
       setLoading(false);
     }
   };
