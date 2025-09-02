@@ -19,7 +19,7 @@ export async function POST(request: Request) {
 
     const supabaseAdmin = createSupabaseAdmin();
 
-    // Check if lead already exists
+    // Check if lead already exists by session_id
     const { data: existingLead, error: checkError } = await supabaseAdmin
       .from('leads')
       .select('id, current_step, status')
@@ -30,6 +30,63 @@ export async function POST(request: Request) {
       console.error('❌ Error checking existing lead:', checkError);
       throw checkError;
     }
+
+    // Prepare data for existing leads table structure
+    const insertData = {
+      session_id: leadData.session_id,
+      brand_id: leadData.brand_id,
+      current_step: leadData.current_step,
+      status: leadData.status,
+      
+      // Basic Information (existing fields)
+      first_name: leadData.first_name || '',
+      last_name: leadData.last_name || '',
+      email: leadData.email || '',
+      phone: leadData.phone || '',
+      
+      // Demographics (existing fields)
+      military_status: leadData.military_status || '',
+      branch_of_service: leadData.branch_of_service || '',
+      coverage_amount: leadData.coverage_amount || 0,
+      
+      // Additional fields (will be stored in existing columns or added as needed)
+      lead_score: 0,
+      lead_grade: 'C',
+      last_activity_at: new Date().toISOString(),
+      
+      // Marketing & Analytics
+      utm_source: leadData.utm_source || '',
+      utm_campaign: leadData.utm_campaign || '',
+      
+      // Store additional data in a JSON field if available, or use existing columns
+      additional_data: {
+        state: leadData.state,
+        marital_status: leadData.marital_status,
+        date_of_birth: leadData.date_of_birth,
+        tobacco_use: leadData.tobacco_use,
+        medical_conditions: leadData.medical_conditions,
+        height: leadData.height,
+        weight: leadData.weight,
+        hospital_care: leadData.hospital_care,
+        diabetes_medication: leadData.diabetes_medication,
+        street_address: leadData.street_address,
+        city: leadData.city,
+        zip_code: leadData.zip_code,
+        beneficiary_name: leadData.beneficiary_name,
+        beneficiary_relationship: leadData.beneficiary_relationship,
+        drivers_license: leadData.drivers_license,
+        ssn: leadData.ssn,
+        bank_name: leadData.bank_name,
+        routing_number: leadData.routing_number,
+        account_number: leadData.account_number,
+        policy_date: leadData.policy_date,
+        transactional_consent: leadData.transactional_consent,
+        marketing_consent: leadData.marketing_consent,
+        exit_intent: leadData.exit_intent,
+        user_agent: leadData.user_agent,
+        referrer: leadData.referrer
+      }
+    };
 
     let result;
     if (existingLead) {
@@ -44,8 +101,7 @@ export async function POST(request: Request) {
       const { data, error } = await supabaseAdmin
         .from('leads')
         .update({
-          ...leadData,
-          last_activity: new Date().toISOString(),
+          ...insertData,
           updated_at: new Date().toISOString()
         })
         .eq('session_id', leadData.session_id)
@@ -68,7 +124,7 @@ export async function POST(request: Request) {
       const { data, error } = await supabaseAdmin
         .from('leads')
         .insert({
-          ...leadData,
+          ...insertData,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
@@ -107,52 +163,6 @@ export async function POST(request: Request) {
         error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString()
       },
-      { status: 500 }
-    );
-  }
-}
-
-export async function GET(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const sessionId = searchParams.get('session_id');
-    const brandId = searchParams.get('brand_id');
-
-    console.log('🔍 LEAD API GET called:', {
-      timestamp: new Date().toISOString(),
-      sessionId,
-      brandId
-    });
-
-    const supabaseAdmin = createSupabaseAdmin();
-
-    let query = supabaseAdmin.from('leads').select('*');
-
-    if (sessionId) {
-      query = query.eq('session_id', sessionId);
-    }
-    if (brandId) {
-      query = query.eq('brand_id', brandId);
-    }
-
-    const { data, error } = await query.order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('❌ Error fetching leads:', error);
-      throw error;
-    }
-
-    console.log('✅ Leads fetched successfully:', {
-      count: data?.length || 0,
-      sessionId,
-      brandId
-    });
-
-    return NextResponse.json({ success: true, data });
-  } catch (error) {
-    console.error('💥 Error in leads GET API:', error);
-    return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

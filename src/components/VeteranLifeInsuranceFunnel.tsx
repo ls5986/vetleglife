@@ -150,67 +150,68 @@ export default function VeteranLifeInsuranceFunnel({ onComplete, onClose }: Vete
 
       const stepName = getStepName(currentStep);
       
+      // Use existing leads table structure for now
+      const leadData = {
+        session_id: formData.sessionId,
+        brand_id: 'veteran-legacy-life',
+        current_step: currentStep,
+        status: currentStep === TOTAL_STEPS ? 'Completed' : 'Partial',
+        
+        // Basic Information (existing fields)
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        
+        // Demographics (existing fields)
+        military_status: formData.militaryStatus,
+        branch_of_service: formData.branchOfService,
+        coverage_amount: formData.coverageAmount ? parseInt(formData.coverageAmount.replace(/[^0-9]/g, '')) : 0,
+        
+        // Additional fields (will be stored in JSON or separate columns)
+        state: formData.state,
+        marital_status: formData.maritalStatus,
+        date_of_birth: formData.dateOfBirth,
+        tobacco_use: formData.tobaccoUse,
+        medical_conditions: formData.medicalConditions.join(', '),
+        height: formData.height,
+        weight: formData.weight,
+        hospital_care: formData.hospitalCare,
+        diabetes_medication: formData.diabetesMedication,
+        street_address: formData.streetAddress,
+        city: formData.city,
+        zip_code: formData.zipCode,
+        beneficiary_name: formData.beneficiaryName,
+        beneficiary_relationship: formData.beneficiaryRelationship,
+        drivers_license: formData.driversLicense,
+        ssn: formData.ssn,
+        bank_name: formData.bankName,
+        routing_number: formData.routingNumber,
+        account_number: formData.accountNumber,
+        policy_date: formData.policyDate,
+        transactional_consent: formData.transactionalConsent,
+        marketing_consent: formData.marketingConsent,
+        
+        // Marketing & Analytics
+        user_agent: navigator.userAgent,
+        referrer: document.referrer,
+        utm_source: formData.utmSource,
+        utm_campaign: formData.utmCampaign,
+        
+        // Exit Intent
+        exit_intent: formData.exitIntent,
+        
+        // Timestamps
+        created_at: new Date().toISOString(),
+        last_activity_at: new Date().toISOString()
+      };
+
+      console.log('📤 Sending lead data:', leadData);
+      
       const response = await fetch('/api/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          leadData: {
-            session_id: formData.sessionId,
-            brand_id: 'veteran-legacy-life',
-            current_step: currentStep,
-            step_name: stepName,
-            form_type: currentStep === TOTAL_STEPS ? 'Completed' : 'Partial',
-            status: currentStep === TOTAL_STEPS ? 'Completed' : 'Partial',
-            
-            // Basic Information
-            first_name: formData.firstName,
-            last_name: formData.lastName,
-            email: formData.email,
-            phone: formData.phone,
-            date_of_birth: formData.dateOfBirth,
-            
-            // Consent (from step 6)
-            transactional_consent: formData.transactionalConsent,
-            marketing_consent: formData.marketingConsent,
-            
-            // Demographics
-            state: formData.state,
-            military_status: formData.militaryStatus,
-            branch_of_service: formData.branchOfService,
-            marital_status: formData.maritalStatus,
-            
-            // Coverage & Health
-            coverage_amount: formData.coverageAmount,
-            tobacco_use: formData.tobaccoUse,
-            medical_conditions: formData.medicalConditions,
-            height: formData.height,
-            weight: formData.weight,
-            hospital_care: formData.hospitalCare,
-            diabetes_medication: formData.diabetesMedication,
-            
-            // Address
-            street_address: formData.streetAddress,
-            city: formData.city,
-            application_state: formData.state,
-            zip_code: formData.zipCode,
-            
-            // Additional Fields
-            driver_license: formData.driversLicense,
-            
-            // Marketing & Analytics
-            user_agent: navigator.userAgent,
-            referrer: document.referrer,
-            utm_source: formData.utmSource,
-            utm_campaign: formData.utmCampaign,
-            
-            // Exit Intent
-            exit_intent: formData.exitIntent,
-            
-            // Timestamps
-            created_at: new Date().toISOString(),
-            last_activity: new Date().toISOString()
-          }
-        })
+        body: JSON.stringify({ leadData })
       });
       
       if (!response.ok) {
@@ -218,7 +219,8 @@ export default function VeteranLifeInsuranceFunnel({ onComplete, onClose }: Vete
         console.error('❌ Failed to update session progress:', {
           status: response.status,
           statusText: response.statusText,
-          error: errorText
+          error: errorText,
+          responseHeaders: Object.fromEntries(response.headers.entries())
         });
       } else {
         const result = await response.json();
@@ -233,7 +235,8 @@ export default function VeteranLifeInsuranceFunnel({ onComplete, onClose }: Vete
       console.error('💥 Error updating session progress:', {
         sessionId: formData.sessionId,
         currentStep,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
       });
     }
   }
