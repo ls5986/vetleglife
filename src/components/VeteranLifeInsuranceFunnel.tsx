@@ -19,6 +19,8 @@ interface VeteranFormData {
   email: string;
   phone: string;
   dateOfBirth: string;
+  transactionalConsent: boolean;
+  marketingConsent: boolean;
   
   // Medical Answers
   tobaccoUse: string;
@@ -72,6 +74,8 @@ export default function VeteranLifeInsuranceFunnel({ onComplete, onClose }: Vete
     email: '',
     phone: '',
     dateOfBirth: '',
+    transactionalConsent: false,
+    marketingConsent: false,
     tobaccoUse: '',
     medicalConditions: [],
     height: '',
@@ -113,16 +117,18 @@ export default function VeteranLifeInsuranceFunnel({ onComplete, onClose }: Vete
   useEffect(() => {
     const timer = setTimeout(() => {
       if (currentStep === 1) {
+        // Welcome step - go directly to first question after 3 seconds
         nextStep();
-      } else if (currentStep < TOTAL_STEPS) {
+      } else if (currentStep < TOTAL_STEPS && canGoNext()) {
+        // Only auto-advance if the current step is complete
         nextStep();
       }
     }, currentStep === 1 ? 3000 : 15000);
 
     return () => clearTimeout(timer);
-  }, [currentStep]);
+  }, [currentStep, formData]);
 
-  // Track progress in database
+  // Track progress in database - save partial data on every step
   useEffect(() => {
     updateSessionProgress();
   }, [currentStep, formData]);
@@ -163,9 +169,9 @@ export default function VeteranLifeInsuranceFunnel({ onComplete, onClose }: Vete
             phone: formData.phone,
             date_of_birth: formData.dateOfBirth,
             
-            // Consent
-            transactional_consent: true,
-            marketing_consent: true,
+            // Consent (from step 6)
+            transactional_consent: formData.transactionalConsent,
+            marketing_consent: formData.marketingConsent,
             
             // Demographics
             state: formData.state,
@@ -281,7 +287,7 @@ export default function VeteranLifeInsuranceFunnel({ onComplete, onClose }: Vete
       case 3: return !!formData.branchOfService;
       case 4: return !!formData.maritalStatus;
       case 5: return !!formData.coverageAmount;
-      case 6: return !!(formData.firstName && formData.lastName && formData.email && formData.phone);
+      case 6: return !!(formData.firstName && formData.lastName && formData.email && formData.phone && formData.transactionalConsent);
       case 7: return !!formData.dateOfBirth;
       case 8: return !!formData.tobaccoUse;
       case 9: return formData.medicalConditions.length > 0;
@@ -460,7 +466,7 @@ export default function VeteranLifeInsuranceFunnel({ onComplete, onClose }: Vete
   );
 }
 
-// Step Components - I'll create these in the next message to match your exact structure
+// Step Components
 const StateSelectionStep: React.FC<{ formData: VeteranFormData; updateFormData: (data: Partial<VeteranFormData>) => void }> = ({ formData, updateFormData }) => (
   <div className="space-y-6 text-center">
     <h2 className="text-2xl font-bold text-gray-900">Select Your State</h2>
@@ -615,6 +621,35 @@ const ContactInfoStep: React.FC<{ formData: VeteranFormData; updateFormData: (da
           className="w-full px-3 py-2 border border-gray-300 rounded-md"
           placeholder="Phone Number"
         />
+      </div>
+      
+      {/* Compliance Checkboxes */}
+      <div className="space-y-3 pt-4 border-t border-gray-200">
+        <h3 className="text-lg font-semibold text-gray-900">Consent & Compliance</h3>
+        <div className="space-y-3">
+          <label className="flex items-center space-x-3">
+            <input
+              type="checkbox"
+              checked={formData.transactionalConsent}
+              onChange={(e) => updateFormData({ transactionalConsent: e.target.checked })}
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <span className="text-sm text-gray-700">
+              I consent to receive transactional communications regarding my application
+            </span>
+          </label>
+          <label className="flex items-center space-x-3">
+            <input
+              type="checkbox"
+              checked={formData.marketingConsent}
+              onChange={(e) => updateFormData({ marketingConsent: e.target.checked })}
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <span className="text-sm text-gray-700">
+              I consent to receive marketing communications about life insurance products
+            </span>
+          </label>
+        </div>
       </div>
     </div>
   </div>
