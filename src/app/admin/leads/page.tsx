@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { createSupabaseAdmin } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -57,7 +57,8 @@ export default function LeadsPage() {
 
   const loadBrands = async () => {
     try {
-      const { data, error } = await supabase
+      const supabaseAdmin = createSupabaseAdmin();
+      const { data, error } = await supabaseAdmin
         .from('brands')
         .select('*')
         .eq('is_active', true)
@@ -74,7 +75,9 @@ export default function LeadsPage() {
     try {
       setLoading(true);
       
-      let query = supabase
+      const supabaseAdmin = createSupabaseAdmin();
+      
+      let query = supabaseAdmin
         .from('leads')
         .select(`
           *,
