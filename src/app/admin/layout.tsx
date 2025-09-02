@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Shield, LogOut, BarChart3, Users, Settings } from 'lucide-react';
 import Link from 'next/link';
 
@@ -14,6 +14,7 @@ export default function AdminLayout({
   const [isLoading, setIsLoading] = useState(true);
   const [password, setPassword] = useState('');
   const router = useRouter();
+  const pathname = usePathname();
 
   // Simple password-based authentication
   const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'admin123';
@@ -41,6 +42,13 @@ export default function AdminLayout({
     setIsAuthenticated(false);
     localStorage.removeItem('admin_authenticated');
     router.push('/admin');
+  };
+
+  const isActiveRoute = (path: string) => {
+    if (path === '/admin') {
+      return pathname === '/admin';
+    }
+    return pathname.startsWith(path);
   };
 
   if (isLoading) {
@@ -113,7 +121,7 @@ export default function AdminLayout({
             <div className="flex items-center space-x-4">
               <button
                 onClick={handleLogout}
-                className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+                className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
               >
                 <LogOut className="h-4 w-4" />
                 <span>Logout</span>
@@ -129,21 +137,33 @@ export default function AdminLayout({
           <nav className="flex space-x-8">
             <Link
               href="/admin"
-              className="flex items-center space-x-2 py-4 px-1 border-b-2 border-blue-500 text-sm font-medium text-blue-600"
+              className={`flex items-center space-x-2 py-4 px-1 border-b-2 text-sm font-medium transition-colors ${
+                isActiveRoute('/admin') 
+                  ? 'border-blue-500 text-blue-600' 
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
             >
               <BarChart3 className="h-4 w-4" />
               <span>Dashboard</span>
             </Link>
             <Link
               href="/admin/leads"
-              className="flex items-center space-x-2 py-4 px-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              className={`flex items-center space-x-2 py-4 px-1 border-b-2 text-sm font-medium transition-colors ${
+                isActiveRoute('/admin/leads') 
+                  ? 'border-blue-500 text-blue-600' 
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
             >
               <Users className="h-4 w-4" />
               <span>All Leads</span>
             </Link>
             <Link
               href="/admin/settings"
-              className="flex items-center space-x-2 py-4 px-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              className={`flex items-center space-x-2 py-4 px-1 border-b-2 text-sm font-medium transition-colors ${
+                isActiveRoute('/admin/settings') 
+                  ? 'border-blue-500 text-blue-600' 
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
             >
               <Settings className="h-4 w-4" />
               <span>Settings</span>
@@ -153,7 +173,7 @@ export default function AdminLayout({
       </div>
 
       {/* Admin Content */}
-      <main>{children}</main>
+      <main className="min-h-screen">{children}</main>
     </div>
   );
 }

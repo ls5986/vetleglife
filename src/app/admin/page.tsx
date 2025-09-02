@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -80,134 +79,42 @@ export default function AdminDashboard() {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('today');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadDashboardData();
-    loadBrands();
   }, [selectedBrand, timeRange]);
-
-  const loadBrands = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('brands')
-        .select('*')
-        .eq('is_active', true)
-        .order('brand_name');
-      
-      if (error) throw error;
-      setBrands(data || []);
-    } catch (error) {
-      console.error('Error loading brands:', error);
-    }
-  };
 
   const loadDashboardData = async () => {
     try {
       setLoading(true);
+      setError(null);
       
-      // Calculate date range
-      const now = new Date();
-      let startDate: string;
+      console.log('🚀 Loading dashboard data...');
       
-      switch (timeRange) {
-        case 'today':
-          startDate = now.toISOString().split('T')[0];
-          break;
-        case 'week':
-          const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-          startDate = weekAgo.toISOString().split('T')[0];
-          break;
-        case 'month':
-          const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-          startDate = monthAgo.toISOString().split('T')[0];
-          break;
-        default:
-          startDate = now.toISOString().split('T')[0];
+      const response = await fetch(`/api/admin/dashboard?timeRange=${timeRange}&selectedBrand=${selectedBrand}`);
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to load dashboard data');
       }
       
-      // Build queries with brand filter
-      let leadsQuery = supabase
-        .from('leads')
-        .select(`
-          *,
-          brands (brand_name, domain, primary_color)
-        `)
-        .gte('created_at', startDate);
+      const { data } = result;
       
-      let appsQuery = supabase
-        .from('applications')
-        .select('*')
-        .gte('created_at', startDate);
-
-      if (selectedBrand !== 'all') {
-        leadsQuery = leadsQuery.eq('brand_id', selectedBrand);
-        appsQuery = appsQuery.eq('brand_id', selectedBrand);
-      }
-
-      // Get leads and applications data
-      const [leadsResult, appsResult] = await Promise.all([
-        leadsQuery,
-        appsQuery
-      ]);
-
-      if (leadsResult.error) throw leadsResult.error;
-      if (appsResult.error) throw appsResult.error;
-
-      const leads = leadsResult.data || [];
-      const applications = appsResult.data || [];
-
-      // Calculate brand performance
-      const brandPerformance: { [brandId: string]: any } = {};
+      setStats(data.stats);
+      setBrands(data.brands || []);
+      setRecentLeads(data.recentLeads || []);
       
-      for (const brand of brands) {
-        const brandLeads = leads.filter(lead => lead.brand_id === brand.id);
-        const brandApps = applications.filter(app => app.brand_id === brand.id);
-        
-        brandPerformance[brand.id] = {
-          leads: brandLeads.length,
-          applications: brandApps.length,
-          conversionRate: brandLeads.length > 0 ? (brandApps.length / brandLeads.length) * 100 : 0,
-          revenue: brandApps.reduce((sum, app) => sum + (app.coverage_amount || 0), 0)
-        };
-      }
-
-      // Calculate overall stats
-      const todayLeads = leads.length;
-      const todayApplications = applications.length;
-      const conversionRate = todayLeads > 0 ? (todayApplications / todayLeads) * 100 : 0;
-
-      const totalRevenue = applications.reduce((sum, app) => sum + (app.coverage_amount || 0), 0);
-
-      
-      // Get active and abandoned leads
-      const activeLeads = leads.filter(lead => lead.status === 'active').length;
-      const abandonedLeads = leads.filter(lead => lead.status === 'abandoned').length;
-
-
-      setStats({
-        todayLeads,
-        todayApplications,
-        conversionRate,
-        activeLeads,
-        abandonedLeads,
-        totalRevenue,
-        brandPerformance
+      console.log('✅ Dashboard data loaded:', {
+        leads: data.stats.todayLeads,
+        applications: data.stats.todayApplications,
+        brands: data.brands?.length || 0
       });
-
-      // Get recent leads
-      const { data: recentLeadsData } = await supabase
-        .from('leads')
-        .select(`
-          *,
-          brands (brand_name, domain, primary_color)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(10);
-
-      setRecentLeads(recentLeadsData || []);
+      
       setLoading(false);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
+      setError('Failed to load dashboard data. Please try again.');
       setLoading(false);
     }
   };
@@ -272,6 +179,29 @@ export default function AdminDashboard() {
             </Button>
           </div>
         </div>
+
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="flex items-center">
+              <AlertTriangle className="h-5 w-5 text-red-400 mr-2" />
+              <div>
+                <h3 className="text-sm font-medium text-red-800">Error Loading Data</h3>
+                <p className="text-sm text-red-700 mt-1">{error}</p>
+              </div>
+            </div>
+            <div className="mt-3">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={loadDashboardData}
+                className="text-red-700 border-red-300 hover:bg-red-100"
+              >
+                Try Again
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

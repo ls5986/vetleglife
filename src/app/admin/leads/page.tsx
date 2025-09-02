@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -42,98 +41,41 @@ export default function LeadsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [brandFilter, setBrandFilter] = useState('all');
   const [brands, setBrands] = useState<any[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalLeads, setTotalLeads] = useState(0);
+  const leadsPerPage = 20;
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [currentPage, statusFilter, brandFilter]); // Dependencies for re-fetching
 
   const loadData = async () => {
     try {
       setLoading(true);
       setError(null);
-      
-      console.log('🚀 Loading all data...');
-      
-      // First try direct Supabase access
-      try {
-        const [brandsResult, leadsResult] = await Promise.all([
-          supabase
-            .from('brands')
-            .select('*')
-            .eq('is_active', true)
-            .order('brand_name'),
-          
-          supabase
-            .from('leads')
-            .select(`
-              *,
-              brands (brand_name, domain, primary_color)
-            `)
-            .order('created_at', { ascending: false })
-        ]);
 
-        console.log('📊 Direct Supabase results:', {
-          brands: brandsResult,
-          leads: leadsResult
-        });
+      console.log('🚀 Loading leads data...');
 
-        // Handle brands
-        if (brandsResult.error) {
-          console.error('❌ Brands error:', brandsResult.error);
-          throw new Error(`Failed to load brands: ${brandsResult.error.message}`);
-        }
-        
-        // Handle leads
-        if (leadsResult.error) {
-          console.error('❌ Leads error:', leadsResult.error);
-          throw new Error(`Failed to load leads: ${leadsResult.error.message}`);
-        }
+      const response = await fetch(`/api/admin/leads-data?searchTerm=${searchTerm}&statusFilter=${statusFilter}&brandFilter=${brandFilter}&page=${currentPage}&limit=${leadsPerPage}`);
+      const result = await response.json();
 
-        setBrands(brandsResult.data || []);
-        setLeads(leadsResult.data || []);
-        
-        console.log('✅ Direct Supabase data loaded successfully:', {
-          brands: brandsResult.data?.length || 0,
-          leads: leadsResult.data?.length || 0
-        });
-        
-        return; // Success, exit early
-        
-      } catch (directError) {
-        console.log('⚠️ Direct Supabase failed, trying admin API route...', directError);
-        
-        // Fallback to admin API route
-        const [brandsResponse, leadsResponse] = await Promise.all([
-          fetch('/api/admin/brands'),
-          fetch('/api/admin/leads')
-        ]);
-        
-        const brandsResult = await brandsResponse.json();
-        const leadsResult = await leadsResponse.json();
-        
-        console.log('📊 Admin API results:', {
-          brands: brandsResult,
-          leads: leadsResult
-        });
-        
-        if (!brandsResult.success) {
-          throw new Error(`Admin API brands failed: ${brandsResult.error}`);
-        }
-        
-        if (!leadsResult.success) {
-          throw new Error(`Admin API leads failed: ${leadsResult.error}`);
-        }
-        
-        setBrands(brandsResult.data || []);
-        setLeads(leadsResult.data || []);
-        
-        console.log('✅ Admin API data loaded successfully:', {
-          brands: brandsResult.data?.length || 0,
-          leads: leadsResult.data?.length || 0
-        });
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to load leads data');
       }
+
+      const { data } = result;
       
+      setBrands(data.brands || []);
+      setLeads(data.leads || []);
+      setTotalLeads(data.pagination.totalLeads || 0);
+
+      console.log('✅ Leads data loaded successfully:', {
+        brands: data.brands?.length || 0,
+        leads: data.leads?.length || 0,
+        total: data.pagination.totalLeads || 0
+      });
+
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
       console.error('💥 Critical error:', errorMessage);
@@ -169,10 +111,10 @@ export default function LeadsPage() {
   const filteredLeads = leads.filter(lead => {
     // Status filter
     if (statusFilter !== 'all' && lead.status !== statusFilter) return false;
-    
+
     // Brand filter
     if (brandFilter !== 'all' && lead.brand_id !== brandFilter) return false;
-    
+
     // Search filter
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
@@ -185,9 +127,15 @@ export default function LeadsPage() {
         (lead.military_status?.toLowerCase().includes(searchLower))
       );
     }
-    
+
     return true;
   });
+
+  const totalPages = Math.ceil(totalLeads / leadsPerPage); // Calculate total pages based on total leads
+  const paginatedLeads = filteredLeads.slice(
+    (currentPage - 1) * leadsPerPage,
+    currentPage * leadsPerPage
+  );
 
   const exportLeads = () => {
     const csvContent = [
@@ -255,7 +203,7 @@ export default function LeadsPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-blue-600">{leads.length}</div>
+            <div className="text-2xl font-bold text-blue-600">{totalLeads}</div>
             <div className="text-sm text-gray-600">Total Leads</div>
           </CardContent>
         </Card>
@@ -277,9 +225,7 @@ export default function LeadsPage() {
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-orange-600">
-              {brands.length}
-            </div>
+            <div className="text-2xl font-bold text-orange-600">{brands.length}</div>
             <div className="text-sm text-gray-600">Active Brands</div>
           </CardContent>
         </Card>
@@ -330,7 +276,7 @@ export default function LeadsPage() {
               </SelectContent>
             </Select>
             <div className="text-sm text-gray-600 flex items-center">
-              Showing {filteredLeads.length} of {leads.length} leads
+              Showing {filteredLeads.length} of {totalLeads} leads
             </div>
           </div>
         </CardContent>
@@ -344,17 +290,16 @@ export default function LeadsPage() {
         <CardContent>
           {loading ? (
             <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-2 text-gray-600">Loading leads...</p>
+              <p className="text-gray-600">Loading leads...</p>
             </div>
           ) : filteredLeads.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-gray-600">
-                {searchTerm || statusFilter !== 'all' || brandFilter !== 'all' 
-                  ? 'No leads match the current filters' 
+                {searchTerm || statusFilter !== 'all' || brandFilter !== 'all'
+                  ? 'No leads match the current filters'
                   : 'No leads found in the system'}
               </p>
-              {leads.length > 0 && (
+              {totalLeads > 0 && (
                 <p className="text-sm text-gray-500 mt-2">
                   Try adjusting your filters or search terms
                 </p>
@@ -366,97 +311,122 @@ export default function LeadsPage() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      LEAD
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      BRAND
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      STATUS
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      STEP
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      GRADE
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      COVERAGE
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      CREATED
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      ACTIONS
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredLeads.map((lead) => (
-                    <tr key={lead.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">
-                            {lead.first_name || lead.last_name ? `${lead.first_name || ''} ${lead.last_name || ''}`.trim() : 'Anonymous'}
-                          </div>
-                          <div className="text-sm text-gray-500">{lead.email || 'No email'}</div>
-                          <div className="text-sm text-gray-500">{lead.phone || 'No phone'}</div>
-                          <div className="text-xs text-gray-400">Session: {lead.session_id}</div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div
-                            className="w-3 h-3 rounded-full mr-2"
-                            style={{ backgroundColor: lead.brands?.primary_color || '#6b7280' }}
-                          />
-                          <span className="text-sm text-gray-900">
-                            {lead.brands?.brand_name || 'Unknown'}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <Badge className={getStatusColor(lead.status)}>
-                          {lead.status}
-                        </Badge>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        Step {lead.current_step}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <Badge className={getLeadGradeColor(lead.lead_grade)}>
-                          {lead.lead_grade || 'N/A'}
-                        </Badge>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {lead.coverage_amount ? formatCurrency(lead.coverage_amount) : 'N/A'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDate(lead.created_at)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex space-x-2">
-                          <Link href={`/admin/leads/${lead.id}`}>
-                            <Button variant="outline" size="sm">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          </Link>
-                          <Button variant="outline" size="sm">
-                            <Phone className="h-4 w-4" />
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Mail className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
+                       LEAD
+                     </th>
+                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                       BRAND
+                     </th>
+                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                       STATUS
+                     </th>
+                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                       STEP
+                     </th>
+                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                       GRADE
+                     </th>
+                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                       COVERAGE
+                     </th>
+                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                       CREATED
+                     </th>
+                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                       ACTIONS
+                     </th>
+                   </tr>
+                 </thead>
+                 <tbody className="bg-white divide-y divide-gray-200">
+                   {paginatedLeads.map((lead) => (
+                     <tr key={lead.id} className="hover:bg-gray-50">
+                       <td className="px-6 py-4 whitespace-nowrap">
+                         <div>
+                           <div className="text-sm font-medium text-gray-900">
+                             {lead.first_name || lead.last_name ? `${lead.first_name || ''} ${lead.last_name || ''}`.trim() : 'Anonymous'}
+                           </div>
+                           <div className="text-sm text-gray-500">{lead.email || 'No email'}</div>
+                           <div className="text-sm text-gray-500">{lead.phone || 'No phone'}</div>
+                           <div className="text-xs text-gray-400">Session: {lead.session_id}</div>
+                         </div>
+                       </td>
+                       <td className="px-6 py-4 whitespace-nowrap">
+                         <div className="flex items-center">
+                           <div
+                             className="w-3 h-3 rounded-full mr-2"
+                             style={{ backgroundColor: lead.brands?.primary_color || '#6b7280' }}
+                           />
+                           <span className="text-sm text-gray-900">
+                             {lead.brands?.brand_name || 'Unknown'}
+                           </span>
+                         </div>
+                       </td>
+                       <td className="px-6 py-4 whitespace-nowrap">
+                         <Badge className={getStatusColor(lead.status)}>
+                           {lead.status}
+                         </Badge>
+                       </td>
+                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                         Step {lead.current_step}
+                       </td>
+                       <td className="px-6 py-4 whitespace-nowrap">
+                         <Badge className={getLeadGradeColor(lead.lead_grade)}>
+                           {lead.lead_grade || 'N/A'}
+                         </Badge>
+                       </td>
+                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                         {lead.coverage_amount ? formatCurrency(lead.coverage_amount) : 'N/A'}
+                       </td>
+                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                         {formatDate(lead.created_at)}
+                       </td>
+                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                         <div className="flex space-x-2">
+                           <Link href={`/admin/leads/${lead.id}`}>
+                             <Button variant="outline" size="sm">
+                               <Eye className="h-4 w-4" />
+                             </Button>
+                           </Link>
+                           <Button variant="outline" size="sm">
+                             <Phone className="h-4 w-4" />
+                           </Button>
+                           <Button variant="outline" size="sm">
+                             <Mail className="h-4 w-4" />
+                           </Button>
+                         </div>
+                       </td>
+                     </tr>
+                   ))}
+                 </tbody>
+               </table>
+             </div>
+           )}
+
+           {/* Pagination */}
+           {totalPages > 1 && (
+             <div className="mt-6 flex items-center justify-between">
+               <div className="text-sm text-gray-700">
+                 Showing {((currentPage - 1) * leadsPerPage) + 1} to {Math.min(currentPage * leadsPerPage, filteredLeads.length)} of {filteredLeads.length} results
+               </div>
+               <div className="flex space-x-2">
+                 <Button
+                   variant="outline"
+                   onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                   disabled={currentPage === 1}
+                 >
+                   Previous
+                 </Button>
+                 <Button
+                   variant="outline"
+                   onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                   disabled={currentPage === totalPages}
+                 >
+                   Next
+                 </Button>
+               </div>
+             </div>
+           )}
+         </CardContent>
+       </Card>
+     </div>
+   );
+ }
