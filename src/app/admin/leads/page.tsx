@@ -55,42 +55,84 @@ export default function LeadsPage() {
       
       console.log('🚀 Loading all data...');
       
-      // Load brands and leads in parallel
-      const [brandsResult, leadsResult] = await Promise.all([
-        supabase
-          .from('brands')
-          .select('*')
-          .eq('is_active', true)
-          .order('brand_name'),
+      // First try direct Supabase access
+      try {
+        const [brandsResult, leadsResult] = await Promise.all([
+          supabase
+            .from('brands')
+            .select('*')
+            .eq('is_active', true)
+            .order('brand_name'),
+          
+          supabase
+            .from('leads')
+            .select(`
+              *,
+              brands (brand_name, domain, primary_color)
+            `)
+            .order('created_at', { ascending: false })
+        ]);
+
+        console.log('📊 Direct Supabase results:', {
+          brands: brandsResult,
+          leads: leadsResult
+        });
+
+        // Handle brands
+        if (brandsResult.error) {
+          console.error('❌ Brands error:', brandsResult.error);
+          throw new Error(`Failed to load brands: ${brandsResult.error.message}`);
+        }
         
-        supabase
-          .from('leads')
-          .select(`
-            *,
-            brands (brand_name, domain, primary_color)
-          `)
-          .order('created_at', { ascending: false })
-      ]);
+        // Handle leads
+        if (leadsResult.error) {
+          console.error('❌ Leads error:', leadsResult.error);
+          throw new Error(`Failed to load leads: ${leadsResult.error.message}`);
+        }
 
-      // Handle brands
-      if (brandsResult.error) {
-        console.error('❌ Brands error:', brandsResult.error);
-        throw new Error(`Failed to load brands: ${brandsResult.error.message}`);
+        setBrands(brandsResult.data || []);
+        setLeads(leadsResult.data || []);
+        
+        console.log('✅ Direct Supabase data loaded successfully:', {
+          brands: brandsResult.data?.length || 0,
+          leads: leadsResult.data?.length || 0
+        });
+        
+        return; // Success, exit early
+        
+      } catch (directError) {
+        console.log('⚠️ Direct Supabase failed, trying admin API route...', directError);
+        
+        // Fallback to admin API route
+        const [brandsResponse, leadsResponse] = await Promise.all([
+          fetch('/api/admin/brands'),
+          fetch('/api/admin/leads')
+        ]);
+        
+        const brandsResult = await brandsResponse.json();
+        const leadsResult = await leadsResponse.json();
+        
+        console.log('📊 Admin API results:', {
+          brands: brandsResult,
+          leads: leadsResult
+        });
+        
+        if (!brandsResult.success) {
+          throw new Error(`Admin API brands failed: ${brandsResult.error}`);
+        }
+        
+        if (!leadsResult.success) {
+          throw new Error(`Admin API leads failed: ${leadsResult.error}`);
+        }
+        
+        setBrands(brandsResult.data || []);
+        setLeads(leadsResult.data || []);
+        
+        console.log('✅ Admin API data loaded successfully:', {
+          brands: brandsResult.data?.length || 0,
+          leads: leadsResult.data?.length || 0
+        });
       }
-      
-      // Handle leads
-      if (leadsResult.error) {
-        console.error('❌ Leads error:', leadsResult.error);
-        throw new Error(`Failed to load leads: ${leadsResult.error.message}`);
-      }
-
-      setBrands(brandsResult.data || []);
-      setLeads(leadsResult.data || []);
-      
-      console.log('✅ Data loaded successfully:', {
-        brands: brandsResult.data?.length || 0,
-        leads: leadsResult.data?.length || 0
-      });
       
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
