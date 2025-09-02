@@ -79,13 +79,16 @@ export default function VeteranLifeInsuranceFunnel({ onComplete, onClose }: Vete
     return () => document.removeEventListener('mouseleave', handleMouseLeave);
   }, [showExitIntent]);
 
-  // Auto-advance timer (15 seconds)
+  // Auto-advance timer (3 seconds for welcome, 15 seconds for other steps)
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (currentStep < 12) {
+      if (currentStep === 1) {
+        // Welcome step - go directly to first question after 3 seconds
+        nextStep();
+      } else if (currentStep < 12) {
         nextStep();
       }
-    }, 15000);
+    }, currentStep === 1 ? 3000 : 15000);
 
     return () => clearTimeout(timer);
   }, [currentStep]);
@@ -119,7 +122,30 @@ export default function VeteranLifeInsuranceFunnel({ onComplete, onClose }: Vete
             session_id: formData.sessionId,
             brand_id: 'veteran-legacy-life',
             current_step: currentStep,
-            form_data: formData,
+            // Map to the fields the admin dashboard expects
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+            email: formData.email,
+            phone: formData.phone,
+            date_of_birth: formData.dateOfBirth,
+            state: formData.state,
+            military_status: formData.militaryStatus,
+            branch_of_service: formData.branchOfService,
+            years_of_service: formData.yearsOfService,
+            discharge_type: formData.dischargeType,
+            height: formData.height,
+            weight: formData.weight,
+            tobacco_use: formData.tobaccoUse,
+            medical_conditions: formData.medicalConditions,
+            coverage_amount: formData.coverageAmount,
+            policy_type: formData.policyType,
+            // Additional fields for admin dashboard
+            status: 'active',
+            lead_score: Math.min(currentStep * 10, 100),
+            lead_grade: currentStep >= 6 ? 'A' : currentStep >= 4 ? 'B' : currentStep >= 2 ? 'C' : 'D',
+            last_activity_at: new Date().toISOString(),
+            utm_source: '',
+            utm_campaign: '',
             exit_intent: formData.exitIntent,
             created_at: new Date().toISOString()
           }
@@ -300,6 +326,7 @@ const WelcomeStep: React.FC = () => (
         ✓ Quick 2-minute process
       </p>
     </div>
+    <p className="text-sm text-gray-500">Starting in 3 seconds...</p>
   </div>
 );
 
