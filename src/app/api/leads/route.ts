@@ -64,45 +64,49 @@ export async function POST(request: Request) {
       throw checkError;
     }
 
-    // Parse date of birth into separate fields for the database
-    const birthDate = leadData.date_of_birth ? new Date(leadData.date_of_birth) : null;
-    const birthMonth = birthDate ? (birthDate.getMonth() + 1).toString() : '';
-    const birthDay = birthDate ? birthDate.getDate().toString() : '';
-    const birthYear = birthDate ? birthDate.getFullYear().toString() : '';
-
-    // Map to exact leads table structure from your schema
-    const insertData = {
+    // Start with ONLY the essential fields that definitely exist
+    const insertData: any = {
       session_id: leadData.session_id,
       brand_id: actualBrandId,
       domain: leadData.domain,
       current_step: leadData.current_step,
       status: leadData.status,
-      
-      // Basic Information
-      first_name: leadData.first_name || '',
-      last_name: leadData.last_name || '',
-      email: leadData.email || '',
-      phone: leadData.phone || '',
-      
-      // Demographics
-      state: leadData.state || '',
-      military_status: leadData.military_status || '',
-      branch_of_service: leadData.branch_of_service || '',
-      marital_status: leadData.marital_status || '',
-      coverage_amount: leadData.coverage_amount || null,
-      
+      last_activity_at: new Date().toISOString()
+    };
+
+    // Only add fields if they have values and are likely to exist in the table
+    if (leadData.first_name) insertData.first_name = leadData.first_name;
+    if (leadData.last_name) insertData.last_name = leadData.last_name;
+    if (leadData.email) insertData.email = leadData.email;
+    if (leadData.phone) insertData.phone = leadData.phone;
+    if (leadData.state) insertData.state = leadData.state;
+    if (leadData.military_status) insertData.military_status = leadData.military_status;
+    if (leadData.branch_of_service) insertData.branch_of_service = leadData.branch_of_service;
+    if (leadData.marital_status) insertData.marital_status = leadData.marital_status;
+    if (leadData.coverage_amount) insertData.coverage_amount = leadData.coverage_amount;
+    
+    // Add UTM tracking if available
+    if (leadData.utm_source) insertData.utm_source = leadData.utm_source;
+    if (leadData.utm_campaign) insertData.utm_campaign = leadData.utm_campaign;
+    
+    // Add user agent and referrer if available
+    if (leadData.user_agent) insertData.user_agent = leadData.user_agent;
+    if (leadData.referrer) insertData.referrer = leadData.referrer;
+
+    // Store all the detailed data in form_data JSON field
+    insertData.form_data = {
       // Birth date components
-      birth_month: birthMonth,
-      birth_day: birthDay,
-      birth_year: birthYear,
+      birth_month: leadData.birth_month || '',
+      birth_day: leadData.birth_day || '',
+      birth_year: leadData.birth_year || '',
       
       // Medical information
       height: leadData.height || '',
-      weight: leadData.weight ? parseInt(leadData.weight) : null,
-      tobacco_use: leadData.tobacco_use === 'Yes',
+      weight: leadData.weight || null,
+      tobacco_use: leadData.tobacco_use || false,
       medical_conditions: leadData.medical_conditions || [],
-      hospital_care: leadData.hospital_care === 'Yes',
-      diabetes_medication: leadData.diabetes_medication === 'Yes',
+      hospital_care: leadData.hospital_care || false,
+      diabetes_medication: leadData.diabetes_medication || false,
       
       // Address and beneficiary
       street_address: leadData.street_address || '',
@@ -113,7 +117,7 @@ export async function POST(request: Request) {
       va_clinic_name: leadData.va_clinic_name || null,
       primary_doctor: leadData.primary_doctor || null,
       drivers_license: leadData.drivers_license || '',
-      license_state: leadData.license_state || leadData.state || '', // Use state if license_state not provided
+      license_state: leadData.license_state || '',
       
       // Financial information
       ssn: leadData.ssn || '',
@@ -122,33 +126,19 @@ export async function POST(request: Request) {
       account_number: leadData.account_number || '',
       policy_date: leadData.policy_date || null,
       
-      // Tracking and analytics
-      last_activity_at: new Date().toISOString(),
-      referrer: leadData.referrer || '',
-      utm_source: leadData.utm_source || '',
-      utm_medium: leadData.utm_medium || '',
-      utm_campaign: leadData.utm_campaign || '',
-      utm_content: leadData.utm_content || '',
-      utm_term: leadData.utm_term || '',
-      fbclid: leadData.fbclid || '',
-      gclid: leadData.gclid || '',
-      ip_address: leadData.ip_address || null,
-      user_agent: leadData.user_agent || '',
-      
-      // Store additional data in form_data JSON field
-      form_data: {
-        transactional_consent: leadData.transactional_consent || false,
-        marketing_consent: leadData.marketing_consent || false,
-        exit_intent: leadData.exit_intent || false,
-        completed_steps: Array.from({length: leadData.current_step}, (_, i) => i + 1)
-      }
+      // Consent and tracking
+      transactional_consent: leadData.transactional_consent || false,
+      marketing_consent: leadData.marketing_consent || false,
+      exit_intent: leadData.exit_intent || false,
+      completed_steps: Array.from({length: leadData.current_step}, (_, i) => i + 1)
     };
 
     console.log('📤 Prepared insert data:', {
       sessionId: leadData.session_id,
       brandId: actualBrandId,
       currentStep: leadData.current_step,
-      fieldsCount: Object.keys(insertData).length
+      fieldsCount: Object.keys(insertData).length,
+      essentialFields: Object.keys(insertData).filter(key => key !== 'form_data')
     });
 
     let result;

@@ -137,77 +137,65 @@ export default function VeteranLifeInsuranceFunnel({ onComplete, onClose }: Vete
 
       const stepName = getStepName(currentStep);
       
-      // Parse date of birth into separate fields for the database
-      const birthDate = formData.dateOfBirth ? new Date(formData.dateOfBirth) : null;
-      const birthMonth = birthDate ? (birthDate.getMonth() + 1).toString() : '';
-      const birthDay = birthDate ? birthDate.getDate().toString() : '';
-      const birthYear = birthDate ? birthDate.getFullYear().toString() : '';
-      
-      // Map to exact leads table structure from your schema
+      // Send only essential data to avoid database constraint issues
       const leadData = {
         session_id: formData.sessionId,
-        brand_id: 'veteran-legacy-life', // This should be the actual UUID from brands table
+        brand_id: 'veteran-legacy-life',
         domain: window.location.hostname,
         current_step: currentStep,
         status: currentStep === TOTAL_STEPS ? 'converted' : 'active',
         
-        // Basic Information
-        first_name: formData.firstName,
-        last_name: formData.lastName,
-        email: formData.email,
-        phone: formData.phone,
-        
-        // Demographics
-        state: formData.state,
-        military_status: formData.militaryStatus,
-        branch_of_service: formData.branchOfService,
-        marital_status: formData.maritalStatus,
+        // Only send basic fields that definitely exist
+        first_name: formData.firstName || '',
+        last_name: formData.lastName || '',
+        email: formData.email || '',
+        phone: formData.phone || '',
+        state: formData.state || '',
+        military_status: formData.militaryStatus || '',
+        branch_of_service: formData.branchOfService || '',
+        marital_status: formData.maritalStatus || '',
         coverage_amount: formData.coverageAmount ? parseInt(formData.coverageAmount.replace(/[^0-9]/g, '')) : null,
         
-        // Birth date components
-        birth_month: birthMonth,
-        birth_day: birthDay,
-        birth_year: birthYear,
+        // UTM tracking
+        utm_source: formData.utmSource || '',
+        utm_campaign: formData.utmCampaign || '',
         
-        // Medical information
-        height: formData.height,
-        weight: formData.weight ? parseInt(formData.weight) : null,
-        tobacco_use: formData.tobaccoUse === 'Yes',
-        medical_conditions: formData.medicalConditions,
-        hospital_care: formData.hospitalCare === 'Yes',
-        diabetes_medication: formData.diabetesMedication === 'Yes',
+        // User tracking
+        user_agent: navigator.userAgent || '',
+        referrer: document.referrer || '',
         
-        // Address and beneficiary
-        street_address: formData.streetAddress,
-        city: formData.city,
-        zip_code: formData.zipCode,
-        beneficiary_name: formData.beneficiaryName,
-        beneficiary_relationship: formData.beneficiaryRelationship,
-        va_clinic_name: null, // Not collected in funnel
-        primary_doctor: null, // Not collected in funnel
-        drivers_license: formData.driversLicense,
-        license_state: formData.state, // Using same state as residence
-        
-        // Financial information
-        ssn: formData.ssn,
-        bank_name: formData.bankName,
-        routing_number: formData.routingNumber,
-        account_number: formData.accountNumber,
-        policy_date: formData.policyDate,
-        
-        // Tracking and analytics
-        last_activity_at: new Date().toISOString(),
-        referrer: document.referrer,
-        utm_source: formData.utmSource,
-        utm_campaign: formData.utmCampaign,
-        user_agent: navigator.userAgent,
-        ip_address: null, // Will be set by server
-        
-        // Store additional data in form_data JSON field
+        // Store all detailed data in form_data JSON field
         form_data: {
-          transactional_consent: formData.transactionalConsent,
-          marketing_consent: formData.marketingConsent,
-          exit_intent: formData.exitIntent,
+          // Birth date
+          date_of_birth: formData.dateOfBirth || '',
+          
+          // Medical information
+          height: formData.height || '',
+          weight: formData.weight || '',
+          tobacco_use: formData.tobaccoUse || '',
+          medical_conditions: formData.medicalConditions || [],
+          hospital_care: formData.hospitalCare || '',
+          diabetes_medication: formData.diabetesMedication || '',
+          
+          // Address and beneficiary
+          street_address: formData.streetAddress || '',
+          city: formData.city || '',
+          zip_code: formData.zipCode || '',
+          beneficiary_name: formData.beneficiaryName || '',
+          beneficiary_relationship: formData.beneficiaryRelationship || '',
+          drivers_license: formData.driversLicense || '',
+          
+          // Financial information
+          ssn: formData.ssn || '',
+          bank_name: formData.bankName || '',
+          routing_number: formData.routingNumber || '',
+          account_number: formData.accountNumber || '',
+          policy_date: formData.policyDate || '',
+          
+          // Consent and tracking
+          transactional_consent: formData.transactionalConsent || false,
+          marketing_consent: formData.marketingConsent || false,
+          exit_intent: formData.exitIntent || false,
           completed_steps: Array.from({length: currentStep}, (_, i) => i + 1)
         }
       };
