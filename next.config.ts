@@ -2,9 +2,6 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
-  experimental: {
-    // Remove deprecated turbo config
-  },
   // Ensure proper static generation
   output: 'standalone',
   // Optimize for Vercel

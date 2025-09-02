@@ -8,6 +8,18 @@ export const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+// Admin client with service role for full access
+export const supabaseAdmin = createClient(
+  supabaseUrl, 
+  process.env.SUPABASE_SERVICE_ROLE_KEY!, 
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
+);
+
 // Server-side admin client (only use in API routes)
 export const createSupabaseAdmin = () => {
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
