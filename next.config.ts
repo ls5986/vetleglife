@@ -4,8 +4,8 @@ const nextConfig: NextConfig = {
   /* config options here */
   // Ensure proper static generation
   output: 'standalone',
-  // Optimize for Vercel
-  swcMinify: true,
+  // Set workspace root to avoid lockfile warnings
+  outputFileTracingRoot: process.cwd(),
   // Handle image optimization
   images: {
     domains: ['localhost'],
