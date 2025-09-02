@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -88,7 +88,7 @@ export default function AdminDashboard() {
 
   const loadBrands = async () => {
     try {
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await supabase
         .from('brands')
         .select('*')
         .eq('is_active', true)
@@ -126,7 +126,7 @@ export default function AdminDashboard() {
       }
       
       // Build queries with brand filter
-      let leadsQuery = supabaseAdmin
+      let leadsQuery = supabase
         .from('leads')
         .select(`
           *,
@@ -134,7 +134,7 @@ export default function AdminDashboard() {
         `)
         .gte('created_at', startDate);
       
-      let appsQuery = supabaseAdmin
+      let appsQuery = supabase
         .from('applications')
         .select('*')
         .gte('created_at', startDate);
@@ -195,7 +195,7 @@ export default function AdminDashboard() {
       });
 
       // Get recent leads
-      const { data: recentLeadsData } = await supabaseAdmin
+      const { data: recentLeadsData } = await supabase
         .from('leads')
         .select(`
           *,

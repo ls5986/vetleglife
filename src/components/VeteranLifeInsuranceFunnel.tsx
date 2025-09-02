@@ -809,7 +809,6 @@ const DiabetesMedicationStep: React.FC<{ formData: VeteranFormData; updateFormDa
           className={`w-full p-4 border-2 rounded-lg ${
             formData.diabetesMedication === answer
               ? 'border-blue-500 bg-blue-50 text-blue-700'
-              : 'border-gray-50 text-blue-700'
               : 'border-gray-300 hover:border-gray-400'
           }`}
         >
