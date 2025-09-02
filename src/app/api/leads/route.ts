@@ -64,49 +64,38 @@ export async function POST(request: Request) {
       throw checkError;
     }
 
-    // Start with ONLY the essential fields that definitely exist
+    // Start with ONLY the absolute essential fields
     const insertData: any = {
       session_id: leadData.session_id,
       brand_id: actualBrandId,
       domain: leadData.domain,
       current_step: leadData.current_step,
-      status: leadData.status,
-      last_activity_at: new Date().toISOString()
+      status: leadData.status
     };
 
-    // Only add fields if they have values and are likely to exist in the table
-    if (leadData.first_name) insertData.first_name = leadData.first_name;
-    if (leadData.last_name) insertData.last_name = leadData.last_name;
-    if (leadData.email) insertData.email = leadData.email;
-    if (leadData.phone) insertData.phone = leadData.phone;
-    if (leadData.state) insertData.state = leadData.state;
-    if (leadData.military_status) insertData.military_status = leadData.military_status;
-    if (leadData.branch_of_service) insertData.branch_of_service = leadData.branch_of_service;
-    if (leadData.marital_status) insertData.marital_status = leadData.marital_status;
+    // Only add the most basic fields if they exist and have values
+    if (leadData.first_name && leadData.first_name.trim()) insertData.first_name = leadData.first_name;
+    if (leadData.last_name && leadData.last_name.trim()) insertData.last_name = leadData.last_name;
+    if (leadData.email && leadData.email.trim()) insertData.email = leadData.email;
+    if (leadData.phone && leadData.phone.trim()) insertData.phone = leadData.phone;
+    if (leadData.state && leadData.state.trim()) insertData.state = leadData.state;
+    if (leadData.military_status && leadData.military_status.trim()) insertData.military_status = leadData.military_status;
+    if (leadData.branch_of_service && leadData.branch_of_service.trim()) insertData.branch_of_service = leadData.branch_of_service;
+    if (leadData.marital_status && leadData.marital_status.trim()) insertData.marital_status = leadData.marital_status;
     if (leadData.coverage_amount) insertData.coverage_amount = leadData.coverage_amount;
-    
-    // Add UTM tracking if available
-    if (leadData.utm_source) insertData.utm_source = leadData.utm_source;
-    if (leadData.utm_campaign) insertData.utm_campaign = leadData.utm_campaign;
-    
-    // Add user agent and referrer if available
-    if (leadData.user_agent) insertData.user_agent = leadData.user_agent;
-    if (leadData.referrer) insertData.referrer = leadData.referrer;
 
     // Store all the detailed data in form_data JSON field
     insertData.form_data = {
-      // Birth date components
-      birth_month: leadData.birth_month || '',
-      birth_day: leadData.birth_day || '',
-      birth_year: leadData.birth_year || '',
+      // Birth date
+      date_of_birth: leadData.date_of_birth || '',
       
       // Medical information
       height: leadData.height || '',
-      weight: leadData.weight || null,
-      tobacco_use: leadData.tobacco_use || false,
+      weight: leadData.weight || '',
+      tobacco_use: leadData.tobacco_use || '',
       medical_conditions: leadData.medical_conditions || [],
-      hospital_care: leadData.hospital_care || false,
-      diabetes_medication: leadData.diabetes_medication || false,
+      hospital_care: leadData.hospital_care || '',
+      diabetes_medication: leadData.diabetes_medication || '',
       
       // Address and beneficiary
       street_address: leadData.street_address || '',
@@ -114,31 +103,36 @@ export async function POST(request: Request) {
       zip_code: leadData.zip_code || '',
       beneficiary_name: leadData.beneficiary_name || '',
       beneficiary_relationship: leadData.beneficiary_relationship || '',
-      va_clinic_name: leadData.va_clinic_name || null,
-      primary_doctor: leadData.primary_doctor || null,
       drivers_license: leadData.drivers_license || '',
-      license_state: leadData.license_state || '',
       
       // Financial information
       ssn: leadData.ssn || '',
       bank_name: leadData.bank_name || '',
       routing_number: leadData.routing_number || '',
       account_number: leadData.account_number || '',
-      policy_date: leadData.policy_date || null,
+      policy_date: leadData.policy_date || '',
       
       // Consent and tracking
       transactional_consent: leadData.transactional_consent || false,
       marketing_consent: leadData.marketing_consent || false,
       exit_intent: leadData.exit_intent || false,
-      completed_steps: Array.from({length: leadData.current_step}, (_, i) => i + 1)
+      completed_steps: Array.from({length: leadData.current_step}, (_, i) => i + 1),
+      
+      // UTM tracking
+      utm_source: leadData.utm_source || '',
+      utm_campaign: leadData.utm_campaign || '',
+      
+      // User tracking
+      user_agent: leadData.user_agent || '',
+      referrer: leadData.referrer || ''
     };
 
     console.log('📤 Prepared insert data:', {
       sessionId: leadData.session_id,
       brandId: actualBrandId,
       currentStep: leadData.current_step,
-      fieldsCount: Object.keys(insertData).length,
-      essentialFields: Object.keys(insertData).filter(key => key !== 'form_data')
+      essentialFields: Object.keys(insertData).filter(key => key !== 'form_data'),
+      formDataKeys: Object.keys(insertData.form_data)
     });
 
     let result;
