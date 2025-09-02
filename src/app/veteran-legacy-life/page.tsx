@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import ComprehensiveFunnel from '@/components/ComprehensiveFunnel';
+import VeteranLifeInsuranceFunnel from '@/components/VeteranLifeInsuranceFunnel';
 import { getBrandById } from '@/config/brands';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,17 +9,17 @@ import { ArrowRight, Phone, Mail, Shield, CheckCircle, Star, Clock, Award, Heart
 import IULEducationSection from '@/components/IULEducationSection';
 
 export default function VeteranLegacyLifePage() {
-  const [showComprehensiveFunnel, setShowComprehensiveFunnel] = useState(false);
+  const [showVeteranFunnel, setShowVeteranFunnel] = useState(false);
   const brand = getBrandById('veteran-legacy-life');
 
   const handleFunnelComplete = (data: any) => {
     console.log('Veteran funnel completed:', data);
-    setShowComprehensiveFunnel(false);
+    setShowVeteranFunnel(false);
   };
 
   const handleStartFunnel = () => {
     console.log('Starting veteran funnel...');
-    setShowComprehensiveFunnel(true);
+    setShowVeteranFunnel(true);
   };
 
   if (!brand) return <div>Brand not found</div>;
@@ -295,12 +295,11 @@ export default function VeteranLegacyLifePage() {
         </div>
       </footer>
 
-      {/* Comprehensive Funnel Modal */}
-      {showComprehensiveFunnel && (
-        <ComprehensiveFunnel
-          brand={brand}
+      {/* Veteran Life Insurance Funnel Modal */}
+      {showVeteranFunnel && (
+        <VeteranLifeInsuranceFunnel
           onComplete={handleFunnelComplete}
-          onClose={() => setShowComprehensiveFunnel(false)}
+          onClose={() => setShowVeteranFunnel(false)}
         />
       )}
     </div>
