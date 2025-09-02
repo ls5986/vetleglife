@@ -15,7 +15,7 @@ export const supabase = createClient(
   }
 );
 
-// Server-side admin client (only use in API routes)
+// Server-side admin client (using new secret key format)
 export const createSupabaseAdmin = () => {
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!supabaseServiceKey) {
