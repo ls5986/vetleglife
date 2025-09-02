@@ -143,7 +143,7 @@ export default function VeteranLifeInsuranceFunnel({ onComplete, onClose }: Vete
       const birthDay = birthDate ? birthDate.getDate().toString() : '';
       const birthYear = birthDate ? birthDate.getFullYear().toString() : '';
       
-      // Map to exact leads table structure
+      // Map to exact leads table structure from your schema
       const leadData = {
         session_id: formData.sessionId,
         brand_id: 'veteran-legacy-life', // This should be the actual UUID from brands table
@@ -183,6 +183,8 @@ export default function VeteranLifeInsuranceFunnel({ onComplete, onClose }: Vete
         zip_code: formData.zipCode,
         beneficiary_name: formData.beneficiaryName,
         beneficiary_relationship: formData.beneficiaryRelationship,
+        va_clinic_name: null, // Not collected in funnel
+        primary_doctor: null, // Not collected in funnel
         drivers_license: formData.driversLicense,
         license_state: formData.state, // Using same state as residence
         
@@ -585,9 +587,9 @@ const CoverageAmountStep: React.FC<{ formData: VeteranFormData; updateFormData: 
           key={amount}
           onClick={() => updateFormData({ coverageAmount: amount })}
           className={`w-full p-4 border-2 rounded-lg ${
-            formData.coverageAmount === amount
-              ? 'border-blue-500 bg-blue-50 text-blue-700'
-              : 'border-gray-300 hover:border-gray-400'
+                          formData.coverageAmount === amount
+                ? 'border-blue-500 bg-blue-50 text-blue-700'
+                : 'border-gray-300 hover:border-gray-400'
           }`}
         >
           {amount}

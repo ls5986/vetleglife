@@ -22,18 +22,33 @@ export async function POST(request: Request) {
     // First, get the actual brand UUID from the brands table
     let actualBrandId = leadData.brand_id;
     if (leadData.brand_id === 'veteran-legacy-life') {
+      console.log('🔍 Looking up brand for domain:', leadData.domain);
+      
       const { data: brandData, error: brandError } = await supabaseAdmin
         .from('brands')
-        .select('id')
+        .select('id, brand_name, domain')
         .eq('domain', leadData.domain)
         .single();
       
       if (brandError) {
         console.error('❌ Error fetching brand:', brandError);
-        // Continue with the string ID if brand lookup fails
+        // Try to find any active brand as fallback
+        const { data: fallbackBrand, error: fallbackError } = await supabaseAdmin
+          .from('brands')
+          .select('id, brand_name, domain')
+          .eq('is_active', true)
+          .limit(1)
+          .single();
+        
+        if (fallbackBrand) {
+          actualBrandId = fallbackBrand.id;
+          console.log('✅ Using fallback brand:', fallbackBrand.brand_name, fallbackBrand.id);
+        } else {
+          console.error('❌ No fallback brand found:', fallbackError);
+        }
       } else if (brandData) {
         actualBrandId = brandData.id;
-        console.log('✅ Found brand ID:', actualBrandId);
+        console.log('✅ Found brand ID:', actualBrandId, 'for domain:', brandData.domain);
       }
     }
 
@@ -44,12 +59,18 @@ export async function POST(request: Request) {
       .eq('session_id', leadData.session_id)
       .single();
 
-    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 means "no rows found"
+    if (checkError && checkError.code !== 'PGRST116') {
       console.error('❌ Error checking existing lead:', checkError);
       throw checkError;
     }
 
-    // Prepare data for the exact leads table structure
+    // Parse date of birth into separate fields for the database
+    const birthDate = leadData.date_of_birth ? new Date(leadData.date_of_birth) : null;
+    const birthMonth = birthDate ? (birthDate.getMonth() + 1).toString() : '';
+    const birthDay = birthDate ? birthDate.getDate().toString() : '';
+    const birthYear = birthDate ? birthDate.getFullYear().toString() : '';
+
+    // Map to exact leads table structure from your schema
     const insertData = {
       session_id: leadData.session_id,
       brand_id: actualBrandId,
@@ -71,17 +92,17 @@ export async function POST(request: Request) {
       coverage_amount: leadData.coverage_amount || null,
       
       // Birth date components
-      birth_month: leadData.birth_month || '',
-      birth_day: leadData.birth_day || '',
-      birth_year: leadData.birth_year || '',
+      birth_month: birthMonth,
+      birth_day: birthDay,
+      birth_year: birthYear,
       
       // Medical information
       height: leadData.height || '',
-      weight: leadData.weight || null,
-      tobacco_use: leadData.tobacco_use || false,
+      weight: leadData.weight ? parseInt(leadData.weight) : null,
+      tobacco_use: leadData.tobacco_use === 'Yes',
       medical_conditions: leadData.medical_conditions || [],
-      hospital_care: leadData.hospital_care || false,
-      diabetes_medication: leadData.diabetes_medication || false,
+      hospital_care: leadData.hospital_care === 'Yes',
+      diabetes_medication: leadData.diabetes_medication === 'Yes',
       
       // Address and beneficiary
       street_address: leadData.street_address || '',
@@ -92,7 +113,7 @@ export async function POST(request: Request) {
       va_clinic_name: leadData.va_clinic_name || null,
       primary_doctor: leadData.primary_doctor || null,
       drivers_license: leadData.drivers_license || '',
-      license_state: leadData.license_state || '',
+      license_state: leadData.license_state || leadData.state || '', // Use state if license_state not provided
       
       // Financial information
       ssn: leadData.ssn || '',
@@ -115,8 +136,20 @@ export async function POST(request: Request) {
       user_agent: leadData.user_agent || '',
       
       // Store additional data in form_data JSON field
-      form_data: leadData.form_data || {}
+      form_data: {
+        transactional_consent: leadData.transactional_consent || false,
+        marketing_consent: leadData.marketing_consent || false,
+        exit_intent: leadData.exit_intent || false,
+        completed_steps: Array.from({length: leadData.current_step}, (_, i) => i + 1)
+      }
     };
+
+    console.log('📤 Prepared insert data:', {
+      sessionId: leadData.session_id,
+      brandId: actualBrandId,
+      currentStep: leadData.current_step,
+      fieldsCount: Object.keys(insertData).length
+    });
 
     let result;
     if (existingLead) {
