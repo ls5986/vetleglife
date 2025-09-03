@@ -1,10 +1,10 @@
 interface ContactInfo {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  transactionalConsent: boolean;
-  marketingConsent: boolean;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  transactionalConsent?: boolean;
+  marketingConsent?: boolean;
 }
 
 interface ValidationResult {

@@ -11,6 +11,20 @@ import { ResponderType } from './steps/ResponderType';
 import { LineOfDutyRisk } from './steps/LineOfDutyRisk';
 import { EducatorRole } from './steps/EducatorRole';
 import { SchoolSafetyConcerns } from './steps/SchoolSafetyConcerns';
+import { PlatformType } from './steps/PlatformType';
+import { FollowerCount } from './steps/FollowerCount';
+import { CompanyStage } from './steps/CompanyStage';
+import { FundingRound } from './steps/FundingRound';
+import { FamilySize } from './steps/FamilySize';
+import { HomeOwnership } from './steps/HomeOwnership';
+import { TradeType } from './steps/TradeType';
+import { YearsInTrade } from './steps/YearsInTrade';
+import { IncomeLevel } from './steps/IncomeLevel';
+import { CareerStage } from './steps/CareerStage';
+import { TradingType } from './steps/TradingType';
+import { PortfolioSize } from './steps/PortfolioSize';
+import { YearsInUS } from './steps/YearsInUS';
+import { CitizenshipStatus } from './steps/CitizenshipStatus';
 import { MaritalStatus } from './steps/MaritalStatus';
 import { CoverageAmount } from './steps/CoverageAmount';
 import { ContactInfo } from './steps/ContactInfo';
@@ -68,10 +82,19 @@ export default function DynamicFunnel({ brandConfig, onComplete, onClose }: Dyna
     goToNextStep, 
     goToPreviousStep,
     formData,
-    setAutoAdvanceEnabled
+    setAutoAdvanceEnabled,
+    createInitialSession
   } = useFunnelStore();
 
   const TOTAL_STEPS = brandConfig.funnelSteps.length;
+
+  // Create initial session when funnel opens
+  React.useEffect(() => {
+    if (isModalOpen && !formData.sessionId) {
+      console.log(`🚀 [DYNAMIC FUNNEL] Funnel opened for brand: ${brandConfig.id}`);
+      createInitialSession();
+    }
+  }, [isModalOpen, formData.sessionId, createInitialSession, brandConfig.id]);
 
   const renderStep = () => {
     const currentStepConfig = brandConfig.funnelSteps.find(step => step.stepNumber === currentStep);
@@ -146,7 +169,7 @@ export default function DynamicFunnel({ brandConfig, onComplete, onClose }: Dyna
       case 'CoverageAmount':
         return !!formData.preQualification?.coverageAmount;
       case 'ContactInfo':
-        const validation = validateContactInfo(formData.contactInfo);
+        const validation = validateContactInfo(formData.contactInfo || {});
         return validation.isValid;
       case 'Birthday':
         return !!formData.contactInfo?.dateOfBirth;

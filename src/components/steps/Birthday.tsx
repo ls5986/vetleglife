@@ -14,21 +14,20 @@ export const Birthday: React.FC = () => {
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 83 }, (_, i) => currentYear - i);
 
-  const handleDateChange = (field: 'month' | 'day' | 'year', value: string) => {
+  const handleFieldChange = (field: 'month' | 'day' | 'year', value: string) => {
     const newDate = {
       ...formData.contactInfo,
-      dateOfBirth: `${formData.contactInfo.month || ''}-${formData.contactInfo.day || ''}-${formData.contactInfo.year || ''}`
+      dateOfBirth: `${formData.contactInfo?.month || ''}-${formData.contactInfo?.day || ''}-${formData.contactInfo?.year || ''}`
     };
     
     if (field === 'month') newDate.month = value;
     if (field === 'day') newDate.day = value;
     if (field === 'year') newDate.year = value;
-
-    updateFormData({ contactInfo: newDate });
-    setAutoAdvanceEnabled(true);
     
-    // Clear error when user makes a selection
-    if (errors) setErrors('');
+    updateFormData({
+      ...formData,
+      contactInfo: newDate
+    });
   };
 
   const validateAge = () => {
@@ -80,7 +79,7 @@ export const Birthday: React.FC = () => {
           </label>
           <select
             value={formData.contactInfo.month || ''}
-            onChange={(e) => handleDateChange('month', e.target.value)}
+            onChange={(e) => handleFieldChange('month', e.target.value)}
             style={{
               width: '100%',
               padding: '0.5rem',
@@ -103,7 +102,7 @@ export const Birthday: React.FC = () => {
           </label>
           <select
             value={formData.contactInfo.day || ''}
-            onChange={(e) => handleDateChange('day', e.target.value)}
+            onChange={(e) => handleFieldChange('day', e.target.value)}
             style={{
               width: '100%',
               padding: '0.5rem',
@@ -126,7 +125,7 @@ export const Birthday: React.FC = () => {
           </label>
           <select
             value={formData.contactInfo.year || ''}
-            onChange={(e) => handleDateChange('year', e.target.value)}
+            onChange={(e) => handleFieldChange('year', e.target.value)}
             style={{
               width: '100%',
               padding: '0.5rem',

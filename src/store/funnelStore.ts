@@ -9,6 +9,20 @@ interface FormData {
     lineOfDutyRisk: string;
     educatorRole: string;
     schoolSafetyConcerns: string;
+    platformType: string;
+    followerCount: string;
+    companyStage: string;
+    fundingRound: string;
+    familySize: string;
+    homeOwnership: string;
+    tradeType: string;
+    yearsInTrade: string;
+    incomeLevel: string;
+    careerStage: string;
+    tradingType: string;
+    portfolioSize: string;
+    yearsInUS: string;
+    citizenshipStatus: string;
     maritalStatus: string;
     coverageAmount: string;
   };
@@ -78,6 +92,7 @@ interface FunnelStore {
   submitPartial: () => void;
   resetFunnel: () => void;
   submitStepData: (step: number, data: FormData) => Promise<void>;
+  createInitialSession: () => Promise<string | null>;
 }
 
 // Generate a unique session ID
@@ -94,6 +109,20 @@ const initialFormData: FormData = {
     lineOfDutyRisk: '',
     educatorRole: '',
     schoolSafetyConcerns: '',
+    platformType: '',
+    followerCount: '',
+    companyStage: '',
+    fundingRound: '',
+    familySize: '',
+    homeOwnership: '',
+    tradeType: '',
+    yearsInTrade: '',
+    incomeLevel: '',
+    careerStage: '',
+    tradingType: '',
+    portfolioSize: '',
+    yearsInUS: '',
+    citizenshipStatus: '',
     maritalStatus: '',
     coverageAmount: ''
   },
@@ -289,6 +318,64 @@ export const useFunnelStore = create<FunnelStore>((set, get) => ({
       }
     } catch (error) {
       console.error(`💥 [FUNNEL STORE] Exception submitting step ${step} data:`, error);
+    }
+  },
+
+  createInitialSession: async () => {
+    try {
+      console.log(`🚀 [FUNNEL STORE] Creating initial session record...`);
+      
+      // Get the current brand from the URL
+      const pathSegments = window.location.pathname.split('/');
+      const brandId = pathSegments[pathSegments.length - 1] || 'veteran-legacy-life';
+      
+      console.log(`🏷️ [FUNNEL STORE] Initial session for brand: ${brandId}`);
+      console.log(`🌐 [FUNNEL STORE] Domain: ${window.location.hostname}`);
+      
+      const requestBody = {
+        leadData: {
+          session_id: crypto.randomUUID(),
+          brand_id: brandId,
+          domain: window.location.hostname,
+          current_step: 1,
+          status: 'started',
+          user_agent: navigator.userAgent,
+          referrer: document.referrer,
+          utm_source: new URLSearchParams(window.location.search).get('utm_source') || '',
+          utm_campaign: new URLSearchParams(window.location.search).get('utm_campaign') || '',
+          utm_medium: new URLSearchParams(window.location.search).get('utm_medium') || ''
+        }
+      };
+      
+      console.log(`📤 [FUNNEL STORE] Sending initial session request:`, requestBody);
+      
+      const response = await fetch('/api/leads', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (response.ok) {
+        const responseData = await response.json();
+        console.log(`✅ [FUNNEL STORE] Initial session created successfully!`);
+        console.log(`📊 [FUNNEL STORE] Session data:`, responseData);
+        
+        // Update the store with the new session ID
+        get().updateFormData({
+          ...get().formData,
+          sessionId: requestBody.leadData.session_id
+        });
+        
+        return requestBody.leadData.session_id;
+      } else {
+        console.error(`❌ [FUNNEL STORE] Failed to create initial session:`, response);
+        return null;
+      }
+    } catch (error) {
+      console.error(`💥 [FUNNEL STORE] Exception creating initial session:`, error);
+      return null;
     }
   }
 }));

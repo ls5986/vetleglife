@@ -3,7 +3,7 @@ import React from 'react';
 interface ButtonProps {
   children: React.ReactNode;
   onClick?: () => void;
-  variant?: 'primary' | 'secondary';
+  variant?: 'primary' | 'secondary' | 'default' | 'outline';
   disabled?: boolean;
   type?: 'button' | 'submit';
   className?: string;
@@ -49,6 +49,25 @@ export const Button: React.FC<ButtonProps> = ({
       '&:hover': {
         backgroundColor: disabled ? '#f3f4f6' : '#f3f4f6',
         borderColor: disabled ? '#e5e7eb' : '#9ca3af'
+      }
+    },
+    default: {
+      backgroundColor: disabled ? '#9ca3af' : '#3b82f6',
+      color: 'white',
+      boxShadow: disabled ? 'none' : '0 1px 3px rgba(59, 130, 246, 0.3)',
+      '&:hover': {
+        backgroundColor: disabled ? '#9ca3af' : '#2563eb',
+        transform: disabled ? 'none' : 'translateY(-1px)',
+        boxShadow: disabled ? 'none' : '0 4px 6px rgba(59, 130, 246, 0.4)'
+      }
+    },
+    outline: {
+      backgroundColor: 'transparent',
+      color: disabled ? '#9ca3af' : '#3b82f6',
+      border: `2px solid ${disabled ? '#e5e7eb' : '#3b82f6'}`,
+      '&:hover': {
+        backgroundColor: disabled ? 'transparent' : '#f0f9ff',
+        borderColor: disabled ? '#e5e7eb' : '#2563eb'
       }
     }
   };
