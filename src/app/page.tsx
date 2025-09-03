@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { BRANDS, type Brand } from '@/config/brands';
+import { LEGACY_BRANDS, type Brand } from '@/config/brands';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,9 +12,9 @@ export default function MultiBrandLanding() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDemographic, setSelectedDemographic] = useState('all');
 
-  const demographics = ['all', ...Array.from(new Set(BRANDS.map(brand => brand.targetDemographic.split(',')[0].trim())))];
+  const demographics = ['all', ...Array.from(new Set(LEGACY_BRANDS.map(brand => brand.targetDemographic.split(',')[0].trim())))];
 
-  const filteredBrands = BRANDS.filter(brand => {
+  const filteredBrands = LEGACY_BRANDS.filter(brand => {
     const matchesSearch = brand.brandName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          brand.targetDemographic.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          brand.tagline.toLowerCase().includes(searchTerm.toLowerCase());
@@ -99,7 +99,7 @@ export default function MultiBrandLanding() {
               <div className="flex items-center">
                 <Users className="h-8 w-8 text-blue-600 mr-3" />
                 <div>
-                  <p className="text-2xl font-bold text-gray-900">{BRANDS.length}</p>
+                  <p className="text-2xl font-bold text-gray-900">{LEGACY_BRANDS.length}</p>
                   <p className="text-sm text-gray-500">Specialized Brands</p>
                 </div>
               </div>
@@ -189,7 +189,7 @@ export default function MultiBrandLanding() {
 
 function BrandCard({ brand }: { brand: Brand }) {
   return (
-    <Link href={`/${brand.id}`}>
+    <Link href={`/funnel/${brand.id}`}>
       <Card className="hover:shadow-lg transition-shadow duration-300 cursor-pointer group">
       <CardHeader className="pb-4">
         <div className="flex justify-between items-start">

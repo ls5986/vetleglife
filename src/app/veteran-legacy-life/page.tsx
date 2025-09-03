@@ -1,16 +1,18 @@
 'use client';
 
-import { useState } from 'react';
-import VeteranLifeInsuranceFunnel from '@/components/VeteranLifeInsuranceFunnel';
-import { getBrandById } from '@/config/brands';
+import { useState, useEffect } from 'react';
+import DynamicFunnel from '../../components/DynamicFunnel';
+import { getBrandConfig } from '../../config/brands';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowRight, Phone, Mail, Shield, CheckCircle, Star, Clock, Award, Heart, ChartLine, Zap, Target, Users, ShieldCheck } from 'lucide-react';
 import IULEducationSection from '@/components/IULEducationSection';
+import { useFunnelStore } from '@/store/funnelStore';
 
 export default function VeteranLegacyLifePage() {
   const [showVeteranFunnel, setShowVeteranFunnel] = useState(false);
-  const brand = getBrandById('veteran-legacy-life');
+  const brandConfig = getBrandConfig('veteran-legacy-life');
+  const { openModal, resetFunnel } = useFunnelStore();
 
   const handleFunnelComplete = (data: any) => {
     console.log('Veteran funnel completed:', data);
@@ -19,10 +21,12 @@ export default function VeteranLegacyLifePage() {
 
   const handleStartFunnel = () => {
     console.log('Starting veteran funnel...');
+    resetFunnel();
+    openModal();
     setShowVeteranFunnel(true);
   };
 
-  if (!brand) return <div>Brand not found</div>;
+  if (!brandConfig) return <div>Brand not found</div>;
 
   return (
     <div className="min-h-screen bg-white">
@@ -48,9 +52,9 @@ export default function VeteranLegacyLifePage() {
               </span>
             </div>
             <div className="flex items-center space-x-6">
-              <a href={`tel:${brand.phone}`} className="flex items-center text-gray-700 hover:text-gray-900">
+              <a href="tel:1-800-VET-INSURANCE" className="flex items-center text-gray-700 hover:text-gray-900">
                 <Phone className="h-5 w-5 mr-2" />
-                <span className="font-semibold">{brand.phone}</span>
+                <span className="font-semibold">1-800-VET-INSURANCE</span>
               </a>
             </div>
           </div>
@@ -88,7 +92,6 @@ export default function VeteranLegacyLifePage() {
               <Button
                 onClick={(e) => { e.stopPropagation(); handleStartFunnel(); }}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center"
-                style={{ backgroundColor: brand.primaryColor }}
               >
                 <ShieldCheck className="h-5 w-5 mr-2" />
                 See If I Qualify
@@ -155,7 +158,7 @@ export default function VeteranLegacyLifePage() {
       </section>
 
       {/* IUL Education Section */}
-      <IULEducationSection brand={brand} />
+      <IULEducationSection brand={brandConfig} />
 
       {/* Comparison Section */}
       <section
@@ -268,8 +271,8 @@ export default function VeteranLegacyLifePage() {
             <div>
               <h3 className="font-semibold mb-4">Contact</h3>
               <div className="space-y-2 text-gray-400">
-                <p>{brand.phone}</p>
-                <p>{brand.email}</p>
+                <p>1-800-VET-INSURANCE</p>
+                <p>info@veteranlegacylife.com</p>
               </div>
             </div>
             <div>
@@ -295,9 +298,10 @@ export default function VeteranLegacyLifePage() {
         </div>
       </footer>
 
-      {/* Veteran Life Insurance Funnel Modal */}
-      {showVeteranFunnel && (
-        <VeteranLifeInsuranceFunnel
+      {/* Dynamic Funnel Modal */}
+      {showVeteranFunnel && brandConfig && (
+        <DynamicFunnel
+          brandConfig={brandConfig}
           onComplete={handleFunnelComplete}
           onClose={() => setShowVeteranFunnel(false)}
         />

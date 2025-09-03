@@ -1,3 +1,32 @@
+export interface BrandConfig {
+  id: string;
+  name: string;
+  displayName: string;
+  description: string;
+  heroTitle: string;
+  heroSubtitle: string;
+  brandSpecificQuestions: BrandQuestion[];
+  funnelSteps: FunnelStep[];
+}
+
+export interface BrandQuestion {
+  id: string;
+  step: number;
+  question: string;
+  description: string;
+  options: string[];
+  required: boolean;
+  brandSpecific: boolean;
+}
+
+export interface FunnelStep {
+  id: string;
+  stepNumber: number;
+  component: string;
+  isBrandSpecific: boolean;
+  required: boolean;
+}
+
 export interface Brand {
   id: string;
   domain: string;
@@ -14,13 +43,81 @@ export interface Brand {
   facebookPixelId?: string;
   googleAnalyticsId?: string;
   isActive: boolean;
-  // Custom fields for each brand
   customFields?: {
     [key: string]: any;
   };
 }
 
-export const BRANDS: Brand[] = [
+export const BRANDS: Record<string, BrandConfig> = {
+  'veteran-legacy-life': {
+    id: 'veteran-legacy-life',
+    name: 'Veteran Legacy Life',
+    displayName: 'Veteran Legacy Life',
+    description: 'Life insurance designed specifically for veterans and military families',
+    heroTitle: 'Veteran Legacy Life',
+    heroSubtitle: 'Protection for Those Who Protected Us',
+    brandSpecificQuestions: [
+      {
+        id: 'military-status',
+        step: 2,
+        question: 'What is your military status?',
+        description: 'This helps us determine your eligibility for veteran benefits.',
+        options: [
+          'Active Duty',
+          'Veteran',
+          'Reservist',
+          'National Guard',
+          'Retired',
+          'Dependent',
+          'None of the above'
+        ],
+        required: true,
+        brandSpecific: true
+      },
+      {
+        id: 'branch-of-service',
+        step: 3,
+        question: 'Which branch of service were you in?',
+        description: 'This helps us provide you with branch-specific benefits and coverage options.',
+        options: [
+          'Army',
+          'Navy',
+          'Air Force',
+          'Marine Corps',
+          'Coast Guard',
+          'Space Force',
+          'National Guard',
+          'Reserves',
+          'None of the above'
+        ],
+        required: true,
+        brandSpecific: true
+      }
+    ],
+    funnelSteps: [
+      { id: 'state-selection', stepNumber: 1, component: 'StateSelection', isBrandSpecific: false, required: true },
+      { id: 'military-status', stepNumber: 2, component: 'MilitaryStatus', isBrandSpecific: true, required: true },
+      { id: 'branch-of-service', stepNumber: 3, component: 'BranchOfService', isBrandSpecific: true, required: true },
+      { id: 'marital-status', stepNumber: 4, component: 'MaritalStatus', isBrandSpecific: false, required: true },
+      { id: 'coverage-amount', stepNumber: 5, component: 'CoverageAmount', isBrandSpecific: false, required: true },
+      { id: 'contact-info', stepNumber: 6, component: 'ContactInfo', isBrandSpecific: false, required: true },
+      { id: 'birthday', stepNumber: 7, component: 'Birthday', isBrandSpecific: false, required: true },
+      { id: 'tobacco-use', stepNumber: 8, component: 'TobaccoUse', isBrandSpecific: false, required: true },
+      { id: 'medical-conditions', stepNumber: 9, component: 'MedicalConditions', isBrandSpecific: false, required: true },
+      { id: 'height-weight', stepNumber: 10, component: 'HeightWeight', isBrandSpecific: false, required: true },
+      { id: 'hospital-care', stepNumber: 11, component: 'HospitalCare', isBrandSpecific: false, required: true },
+      { id: 'diabetes-medication', stepNumber: 12, component: 'DiabetesMedication', isBrandSpecific: false, required: true },
+      { id: 'loading', stepNumber: 13, component: 'StreamingLoadingSpinner', isBrandSpecific: false, required: false },
+      { id: 'pre-qualified-success', stepNumber: 14, component: 'PreQualifiedSuccess', isBrandSpecific: false, required: false },
+      { id: 'iul-quote-modal', stepNumber: 15, component: 'IULQuoteModal', isBrandSpecific: false, required: false },
+      { id: 'application-step-1', stepNumber: 16, component: 'ApplicationStep1', isBrandSpecific: false, required: true },
+      { id: 'application-step-2', stepNumber: 17, component: 'ApplicationStep2', isBrandSpecific: false, required: true },
+      { id: 'final-success', stepNumber: 18, component: 'FinalSuccessModal', isBrandSpecific: false, required: false }
+    ]
+  }
+};
+
+export const LEGACY_BRANDS: Brand[] = [
   {
     id: 'veteran-legacy-life',
     domain: 'veteranlegacylife.com',
@@ -37,196 +134,27 @@ export const BRANDS: Brand[] = [
     customFields: {
       militaryStatus: true,
       branchOfService: true,
-      vaBenefits: true,
-      heroSubtitle: 'Veterans & Active Service Members',
-      heroTitle: 'You May Qualify for New Life Insurance Benefits in 2025',
-      heroDescription: 'As a resident of your state, you are entitled to check your eligibility for exclusive life insurance benefits designed specifically for our nation\'s heroes.',
-      trustBadge: 'Trusted by 50,000+ Veterans Nationwide',
-      benefitsTitle: 'Plans for Veterans, Active Service and Family Members',
-      comparisonTitle: 'The VA Option vs Our Options... What\'s the difference?'
-    }
-  },
-  {
-    id: 'startup-legacy-life',
-    domain: 'startuplegacylife.com',
-    brandName: 'Startup Legacy Life',
-    targetDemographic: 'Entrepreneurs, young professionals, founders',
-    sellingPoint: 'You take risks every day building your company — your financial future doesn\'t have to be one of them. Lock in lifelong protection and a wealth-building plan that grows with your startup.',
-    tagline: 'Build your dream. Secure your legacy.',
-    primaryColor: '#059669',
-    secondaryColor: '#10b981',
-    phone: '(555) 123-4568',
-    email: 'info@startuplegacylife.com',
-    companyName: 'Startup Legacy Life Insurance',
-    isActive: true,
-    customFields: {
-      companyStage: true,
-      fundingRound: true,
-      equityCompensation: true
-    }
-  },
-  {
-    id: 'foundation-legacy-life',
-    domain: 'foundationlegacylife.com',
-    brandName: 'Foundation Legacy Life',
-    targetDemographic: 'New families, first-time homeowners, people just starting out with financial planning',
-    sellingPoint: 'Every strong future is built on a foundation. Protect your loved ones and start building generational wealth now.',
-    tagline: 'A future built on security.',
-    primaryColor: '#7c3aed',
-    secondaryColor: '#8b5cf6',
-    phone: '(555) 123-4569',
-    email: 'info@foundationlegacylife.com',
-    companyName: 'Foundation Legacy Life Insurance',
-    isActive: true,
-    customFields: {
-      familySize: true,
-      homeOwnership: true,
-      childrenAges: true
-    }
-  },
-  {
-    id: 'trade-legacy-life',
-    domain: 'tradelegacylife.com',
-    brandName: 'Trade Legacy Life',
-    targetDemographic: 'Blue-collar workers, skilled trades (HVAC, electricians, mechanics)',
-    sellingPoint: 'You work hard every day with your hands. We\'ll make sure your hard work pays off for generations.',
-    tagline: 'For the people who build, fix, and make.',
-    primaryColor: '#dc2626',
-    secondaryColor: '#ef4444',
-    phone: '(555) 123-4570',
-    email: 'info@tradelegacylife.com',
-    companyName: 'Trade Legacy Life Insurance',
-    isActive: true,
-    customFields: {
-      tradeType: true,
-      yearsInTrade: true,
-      unionMember: true
-    }
-  },
-  {
-    id: 'success-legacy-life',
-    domain: 'successlegacylife.com',
-    brandName: 'Success Legacy Life',
-    targetDemographic: 'High-achievers, sales pros, executives, ambitious millennials/Gen Z',
-    sellingPoint: 'Success isn\'t just what you earn — it\'s what you leave behind. Protect your success with a plan that multiplies it for your family.',
-    tagline: 'Protect what you\'ve worked for.',
-    primaryColor: '#f59e0b',
-    secondaryColor: '#fbbf24',
-    phone: '(555) 123-4571',
-    email: 'info@successlegacylife.com',
-    companyName: 'Success Legacy Life Insurance',
-    isActive: true,
-    customFields: {
-      incomeLevel: true,
-      careerStage: true,
-      performanceMetrics: true
-    }
-  },
-  {
-    id: 'immigrant-legacy-life',
-    domain: 'immigrantlegacylife.com',
-    brandName: 'Immigrant Legacy Life',
-    targetDemographic: 'Immigrant families, first-gen Americans, communities focused on family security',
-    sellingPoint: 'You came here to create a better life. We\'ll help you secure it — and pass it on to the next generation.',
-    tagline: 'From sacrifice to security.',
-    primaryColor: '#0891b2',
-    secondaryColor: '#06b6d4',
-    phone: '(555) 123-4572',
-    email: 'info@immigrantlegacylife.com',
-    companyName: 'Immigrant Legacy Life Insurance',
-    isActive: true,
-    customFields: {
-      yearsInUS: true,
-      citizenshipStatus: true,
-      familyBackHome: true
-    }
-  },
-  {
-    id: 'responder-legacy-life',
-    domain: 'responderlegacylife.com',
-    brandName: 'Responder Legacy Life',
-    targetDemographic: 'First responders — firefighters, EMTs, police, nurses',
-    sellingPoint: 'You protect and serve every day. Let us protect your family with a plan that never takes a day off.',
-    tagline: 'The ones who save lives deserve theirs secured.',
-    primaryColor: '#be185d',
-    secondaryColor: '#ec4899',
-    phone: '(555) 123-4573',
-    email: 'info@responderlegacylife.com',
-    companyName: 'Responder Legacy Life Insurance',
-    isActive: true,
-    customFields: {
-      responderType: true,
-      yearsOfService: true,
-      shiftSchedule: true
-    }
-  },
-  {
-    id: 'educator-legacy-life',
-    domain: 'educatorlegacylife.com',
-    brandName: 'Educator Legacy Life',
-    targetDemographic: 'Teachers, professors, educators, support staff',
-    sellingPoint: 'You\'ve dedicated your life to teaching others. Now we\'ll help you protect your own legacy.',
-    tagline: 'Secure the future you\'ve been shaping.',
-    primaryColor: '#059669',
-    secondaryColor: '#34d399',
-    phone: '(555) 123-4574',
-    email: 'info@educatorlegacylife.com',
-    companyName: 'Educator Legacy Life Insurance',
-    isActive: true,
-    customFields: {
-      educationLevel: true,
-      yearsTeaching: true,
-      schoolType: true
-    }
-  },
-  {
-    id: 'trader-legacy-life',
-    domain: 'traderlegacylife.com',
-    brandName: 'Trader Legacy Life',
-    targetDemographic: 'Day traders, crypto investors, stock market risk-takers',
-    sellingPoint: 'You gamble with markets — but your future doesn\'t need to be a gamble. Hedge your family\'s security with the safest investment there is.',
-    tagline: 'One investment that\'s never risky.',
-    primaryColor: '#1f2937',
-    secondaryColor: '#374151',
-    phone: '(555) 123-4575',
-    email: 'info@traderlegacylife.com',
-    companyName: 'Trader Legacy Life Insurance',
-    isActive: true,
-    customFields: {
-      tradingType: true,
-      portfolioSize: true,
-      riskTolerance: true
-    }
-  },
-  {
-    id: 'creator-legacy-life',
-    domain: 'creatorlegacylife.com',
-    brandName: 'Creator Legacy Life',
-    targetDemographic: 'Content creators, influencers, digital entrepreneurs',
-    sellingPoint: 'You create content every day — but what about your financial future? Turn your hustle into a lasting legacy.',
-    tagline: 'Protect the life behind the likes.',
-    primaryColor: '#7c2d12',
-    secondaryColor: '#ea580c',
-    phone: '(555) 123-4576',
-    email: 'info@creatorlegacylife.com',
-    companyName: 'Creator Legacy Life Insurance',
-    isActive: true,
-    customFields: {
-      platformType: true,
-      followerCount: true,
-      revenueStreams: true
+      vaBenefits: true
     }
   }
 ];
 
-export function getBrandByDomain(domain: string): Brand | undefined {
-  return BRANDS.find(brand => brand.domain === domain);
-}
+export const getBrandConfig = (brandId: string): BrandConfig | null => {
+  return BRANDS[brandId] || null;
+};
+
+export const getAllBrands = (): BrandConfig[] => {
+  return Object.values(BRANDS);
+};
 
 export function getBrandById(id: string): Brand | undefined {
-  return BRANDS.find(brand => brand.id === id);
+  return LEGACY_BRANDS.find(brand => brand.id === id);
+}
+
+export function getBrandByDomain(domain: string): Brand | undefined {
+  return LEGACY_BRANDS.find(brand => brand.domain === domain);
 }
 
 export function getAllActiveBrands(): Brand[] {
-  return BRANDS.filter(brand => brand.isActive);
-} 
+  return LEGACY_BRANDS.filter(brand => brand.isActive);
+}

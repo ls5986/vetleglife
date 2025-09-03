@@ -1,23 +1,32 @@
 'use client';
 
-import { useState } from 'react';
-import ComprehensiveFunnel from '@/components/ComprehensiveFunnel';
-import { getBrandById } from '@/config/brands';
+import { useState, useEffect } from 'react';
+import DynamicFunnel from '@/components/DynamicFunnel';
+import { getBrandConfig } from '@/config/brands';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowRight, Phone, Mail, Camera, CheckCircle, Star, Clock, Award, Heart, ChartLine, Shield, Users, Video, Zap, Target, ShieldCheck } from 'lucide-react';
 import IULEducationSection from '@/components/IULEducationSection';
+import { useFunnelStore } from '@/store/funnelStore';
 
 export default function CreatorLegacyLifePage() {
-  const [showComprehensiveFunnel, setShowComprehensiveFunnel] = useState(false);
-  const brand = getBrandById('creator-legacy-life');
+  const [showCreatorFunnel, setShowCreatorFunnel] = useState(false);
+  const brandConfig = getBrandConfig('creator-legacy-life');
+  const { openModal, resetFunnel } = useFunnelStore();
 
   const handleFunnelComplete = (data: any) => {
     console.log('Creator funnel completed:', data);
-    setShowComprehensiveFunnel(false);
+    setShowCreatorFunnel(false);
   };
 
-  if (!brand) return <div>Brand not found</div>;
+  const handleStartFunnel = () => {
+    console.log('Starting creator funnel...');
+    resetFunnel();
+    openModal();
+    setShowCreatorFunnel(true);
+  };
+
+  if (!brandConfig) return <div>Brand not found</div>;
 
   return (
     <div className="min-h-screen bg-white">
@@ -43,9 +52,9 @@ export default function CreatorLegacyLifePage() {
               </span>
             </div>
             <div className="flex items-center space-x-6">
-              <a href={`tel:${brand.phone}`} className="flex items-center text-gray-700 hover:text-gray-900">
+              <a href="tel:(555) 123-4567" className="flex items-center text-gray-700 hover:text-gray-900">
                 <Phone className="h-5 w-5 mr-2" />
-                <span className="font-semibold">{brand.phone}</span>
+                <span className="font-semibold">(555) 123-4567</span>
               </a>
             </div>
           </div>
@@ -55,7 +64,7 @@ export default function CreatorLegacyLifePage() {
       {/* Hero Section */}
       <section 
         className="py-16 bg-gradient-to-br from-orange-50 to-amber-100 cursor-pointer hover:from-orange-100 hover:to-amber-200 transition-all duration-300"
-        onClick={() => setShowComprehensiveFunnel(true)}
+        onClick={handleStartFunnel}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-8">
@@ -82,9 +91,8 @@ export default function CreatorLegacyLifePage() {
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
-                onClick={() => setShowComprehensiveFunnel(true)}
+                onClick={(e) => { e.stopPropagation(); handleStartFunnel(); }}
                 className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-4 text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center"
-                style={{ backgroundColor: brand.primaryColor }}
               >
                 <Video className="h-5 w-5 mr-2" />
                 Protect My Hustle
@@ -103,94 +111,46 @@ export default function CreatorLegacyLifePage() {
       </section>
 
       {/* Benefits Section */}
-      <section className="py-16 bg-white">
+      <section 
+        className="py-16 bg-white cursor-pointer hover:bg-gray-50 transition-all duration-300"
+        onClick={handleStartFunnel}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-4xl font-bold text-center text-gray-900 mb-12">
-            Protection Plans for Content Creators & Influencers
+            Content Creation is Unpredictable. Your Protection Shouldn't Be.
           </h2>
-          
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
-              <CardContent className="pt-8">
-                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Shield className="h-8 w-8 text-orange-600" />
+            <Card className="text-center p-6">
+              <CardContent className="space-y-4">
+                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto">
+                  <Camera className="h-8 w-8 text-orange-600" />
                 </div>
-                <h3 className="text-xl font-bold mb-3">Whole Life Insurance</h3>
-                <p className="text-gray-600 mb-6">Lifetime protection with guaranteed cash value that grows with your brand.</p>
-                <ul className="space-y-2 text-left">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-orange-500" />
-                    <span className="text-sm">Guaranteed death benefit</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-orange-500" />
-                    <span className="text-sm">Cash value for emergencies</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-orange-500" />
-                    <span className="text-sm">Fixed premiums</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-orange-500" />
-                    <span className="text-sm">Living benefits included</span>
-                  </li>
-                </ul>
+                <h3 className="text-xl font-semibold text-gray-900">Content Insurance</h3>
+                <p className="text-gray-600">
+                  Protect your income stream and family even when you can't create content.
+                </p>
               </CardContent>
             </Card>
-            
-            <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
-              <CardContent className="pt-8">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Clock className="h-8 w-8 text-blue-600" />
+            <Card className="text-center p-6">
+              <CardContent className="space-y-4">
+                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto">
+                  <ChartLine className="h-8 w-8 text-orange-600" />
                 </div>
-                <h3 className="text-xl font-bold mb-3">Term Insurance</h3>
-                <p className="text-gray-600 mb-6">Affordable coverage during your content creation years with conversion options.</p>
-                <ul className="space-y-2 text-left">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-orange-500" />
-                    <span className="text-sm">Lower initial premiums</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-orange-500" />
-                    <span className="text-sm">Flexible term lengths</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-orange-500" />
-                    <span className="text-sm">Convert to permanent later</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-orange-500" />
-                    <span className="text-sm">Living benefits available</span>
-                  </li>
-                </ul>
+                <h3 className="text-xl font-semibold text-gray-900">Wealth Building</h3>
+                <p className="text-gray-600">
+                  Build cash value that grows with the market but never loses money.
+                </p>
               </CardContent>
             </Card>
-            
-            <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
-              <CardContent className="pt-8">
-                <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <ChartLine className="h-8 w-8 text-amber-600" />
+            <Card className="text-center p-6">
+              <CardContent className="space-y-4">
+                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto">
+                  <Clock className="h-8 w-8 text-orange-600" />
                 </div>
-                <h3 className="text-xl font-bold mb-3">Indexed Universal Life</h3>
-                <p className="text-gray-600 mb-6">Market-linked growth potential with downside protection for wealth building.</p>
-                <ul className="space-y-2 text-left">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-orange-500" />
-                    <span className="text-sm">Market-linked growth</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-orange-500" />
-                    <span className="text-sm">Downside protection</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-orange-500" />
-                    <span className="text-sm">Flexible premiums</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-orange-500" />
-                    <span className="text-sm">Advanced living benefits</span>
-                  </li>
-                </ul>
+                <h3 className="text-xl font-semibold text-gray-900">Flexible Premiums</h3>
+                <p className="text-gray-600">
+                  Adjust your payments based on your content income and platform changes.
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -198,71 +158,85 @@ export default function CreatorLegacyLifePage() {
       </section>
 
       {/* IUL Education Section */}
-      <IULEducationSection brand={brand} />
+      <IULEducationSection brand={brandConfig} />
 
       {/* Comparison Section */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-16 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-all duration-300" onClick={handleStartFunnel}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-4xl font-bold text-center text-gray-900 mb-12">
-            Creator Insurance vs Traditional Options... What's the difference?
+            Platform Benefits vs Our Benefits... What's the difference?
           </h2>
-          
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse border border-gray-300">
-              <thead>
-                <tr className="bg-orange-600 text-white">
-                  <th className="border border-gray-300 px-6 py-4 text-left">Feature</th>
-                  <th className="border border-gray-300 px-6 py-4 text-center">Traditional Insurance</th>
-                  <th className="border border-gray-300 px-6 py-4 text-center bg-orange-700">Creator Legacy Life</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="bg-white">
-                  <td className="border border-gray-300 px-6 py-4 font-semibold">Creator-Specific Benefits</td>
-                  <td className="border border-gray-300 px-6 py-4 text-center text-gray-600">None</td>
-                  <td className="border border-gray-300 px-6 py-4 text-center text-orange-600 font-semibold">✓ Customized</td>
-                </tr>
-                <tr className="bg-gray-50">
-                  <td className="border border-gray-300 px-6 py-4 font-semibold">Revenue Stream Protection</td>
-                  <td className="border border-gray-300 px-6 py-4 text-center text-gray-600">Limited</td>
-                  <td className="border border-gray-300 px-6 py-4 text-center text-orange-600 font-semibold">✓ Income Protection</td>
-                </tr>
-                <tr className="bg-white">
-                  <td className="border border-gray-300 px-6 py-4 font-semibold">Platform-Specific Planning</td>
-                  <td className="border border-gray-300 px-6 py-4 text-center text-gray-600">None</td>
-                  <td className="border border-gray-300 px-6 py-4 text-center text-orange-600 font-semibold">✓ Platform Experts</td>
-                </tr>
-                <tr className="bg-gray-50">
-                  <td className="border border-gray-300 px-6 py-4 font-semibold">Creator Expert Support</td>
-                  <td className="border border-gray-300 px-6 py-4 text-center text-gray-600">Generic</td>
-                  <td className="border border-gray-300 px-6 py-4 text-center text-orange-600 font-semibold">✓ Creator Specialists</td>
-                </tr>
-              </tbody>
-            </table>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <Card className="p-6">
+              <CardContent className="space-y-4">
+                <h3 className="text-2xl font-bold text-gray-900 mb-4">Platform Benefits</h3>
+                <ul className="space-y-3">
+                  <li className="flex items-start">
+                    <CheckCircle className="h-5 w-5 text-red-500 mr-2 mt-0.5" />
+                    <span className="text-gray-600">Unpredictable income</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle className="h-5 w-5 text-red-500 mr-2 mt-0.5" />
+                    <span className="text-gray-600">No life insurance</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle className="h-5 w-5 text-red-500 mr-2 mt-0.5" />
+                    <span className="text-gray-600">Algorithm changes</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle className="h-5 w-5 text-red-500 mr-2 mt-0.5" />
+                    <span className="text-gray-600">No wealth building</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+            <Card className="p-6 border-orange-600 border-2">
+              <CardContent className="space-y-4">
+                <h3 className="text-2xl font-bold text-orange-600 mb-4">Our Creator Plans</h3>
+                <ul className="space-y-3">
+                  <li className="flex items-start">
+                    <CheckCircle className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
+                    <span className="text-gray-600">Guaranteed protection</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
+                    <span className="text-gray-600">Life insurance coverage</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
+                    <span className="text-gray-600">Platform-independent</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
+                    <span className="text-gray-600">Wealth building</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-orange-600">
+      <section className="py-16 bg-orange-600 cursor-pointer hover:bg-orange-700 transition-all duration-300" onClick={handleStartFunnel}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold text-white mb-6">
-            Ready to Protect Your Hustle?
+            Ready to Protect Your Creator Legacy?
           </h2>
           <p className="text-xl text-orange-100 mb-8 max-w-2xl mx-auto">
-            Join thousands of creators who've already secured their future and started building generational wealth through our creator-focused life insurance plans.
+            Join thousands of creators who've already secured their families and built wealth through our creator-focused life insurance plans.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              onClick={() => setShowComprehensiveFunnel(true)}
+            <Button
+              onClick={(e) => { e.stopPropagation(); handleStartFunnel(); }}
               className="bg-white text-orange-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center"
             >
-              <Video className="h-5 w-5 mr-2" />
-              Start My Application
+              <ShieldCheck className="h-5 w-5 mr-2" />
+              Protect My Hustle
               <ArrowRight className="h-5 w-5 ml-2" />
             </Button>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="px-8 py-4 text-lg font-semibold rounded-lg border-2 border-white text-white hover:bg-white hover:text-orange-600"
             >
               <Phone className="h-5 w-5 mr-2" />
@@ -284,14 +258,14 @@ export default function CreatorLegacyLifePage() {
                 <span className="text-xl font-bold">Creator Legacy Life</span>
               </div>
               <p className="text-gray-400">
-                Protecting the life behind the likes since 2024.
+                Protecting content creators and their families since 2024.
               </p>
             </div>
             <div>
               <h3 className="font-semibold mb-4">Contact</h3>
               <div className="space-y-2 text-gray-400">
-                <p>{brand.phone}</p>
-                <p>{brand.email}</p>
+                <p>(555) 123-4567</p>
+                <p>info@creatorlegacylife.com</p>
               </div>
             </div>
             <div>
@@ -317,12 +291,12 @@ export default function CreatorLegacyLifePage() {
         </div>
       </footer>
 
-      {/* Comprehensive Funnel Modal */}
-      {showComprehensiveFunnel && (
-        <ComprehensiveFunnel
-          brand={brand}
+      {/* Dynamic Funnel Modal */}
+      {showCreatorFunnel && brandConfig && (
+        <DynamicFunnel
+          brandConfig={brandConfig}
           onComplete={handleFunnelComplete}
-          onClose={() => setShowComprehensiveFunnel(false)}
+          onClose={() => setShowCreatorFunnel(false)}
         />
       )}
     </div>

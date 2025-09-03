@@ -1,23 +1,33 @@
 'use client';
 
-import { useState } from 'react';
-import ComprehensiveFunnel from '@/components/ComprehensiveFunnel';
-import { getBrandById } from '@/config/brands';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight, Phone, Mail, Globe, CheckCircle, Star, Clock, Award, Heart, ChartLine, Shield, Users, Flag, Zap, Target, ShieldCheck } from 'lucide-react';
-import IULEducationSection from '@/components/IULEducationSection';
+import { useEffect, useState } from 'react';
+import { useFunnelStore } from '../../store/funnelStore';
+import { getBrandConfig } from '../../config/brands';
+import DynamicFunnel from '../../components/DynamicFunnel';
+import IULEducationSection from '../../components/IULEducationSection';
+import { Button } from '../../components/ui/button';
+import { Card, CardContent } from '../../components/ui/card';
+import { ArrowRight, Phone, Globe, CheckCircle, Star, Award, Shield, Clock, ChartLine, Flag } from 'lucide-react';
 
 export default function ImmigrantLegacyLifePage() {
-  const [showComprehensiveFunnel, setShowComprehensiveFunnel] = useState(false);
-  const brand = getBrandById('immigrant-legacy-life');
+  const { openModal } = useFunnelStore();
+  const [showImmigrantFunnel, setShowImmigrantFunnel] = useState(false);
+  const brandConfig = getBrandConfig('immigrant-legacy-life');
+
+  useEffect(() => {
+    if (brandConfig) {
+      openModal();
+    }
+  }, [brandConfig, openModal]);
 
   const handleFunnelComplete = (data: any) => {
     console.log('Immigrant funnel completed:', data);
-    setShowComprehensiveFunnel(false);
+    setShowImmigrantFunnel(false);
   };
 
-  if (!brand) return <div>Brand not found</div>;
+  if (!brandConfig) {
+    return <div>Brand not found</div>;
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -43,9 +53,9 @@ export default function ImmigrantLegacyLifePage() {
               </span>
             </div>
             <div className="flex items-center space-x-6">
-              <a href={`tel:${brand.phone}`} className="flex items-center text-gray-700 hover:text-gray-900">
+              <a href="tel:(555) 123-4572" className="flex items-center text-gray-700 hover:text-gray-900">
                 <Phone className="h-5 w-5 mr-2" />
-                <span className="font-semibold">{brand.phone}</span>
+                <span className="font-semibold">(555) 123-4572</span>
               </a>
             </div>
           </div>
@@ -55,7 +65,7 @@ export default function ImmigrantLegacyLifePage() {
       {/* Hero Section */}
       <section 
         className="py-16 bg-gradient-to-br from-cyan-50 to-blue-100 cursor-pointer hover:from-cyan-100 hover:to-blue-200 transition-all duration-300"
-        onClick={() => setShowComprehensiveFunnel(true)}
+        onClick={() => setShowImmigrantFunnel(true)}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-8">
@@ -82,9 +92,8 @@ export default function ImmigrantLegacyLifePage() {
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
-                onClick={() => setShowComprehensiveFunnel(true)}
+                onClick={() => setShowImmigrantFunnel(true)}
                 className="bg-cyan-600 hover:bg-cyan-700 text-white px-8 py-4 text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center"
-                style={{ backgroundColor: brand.primaryColor }}
               >
                 <Flag className="h-5 w-5 mr-2" />
                 Secure My Family's Future
@@ -198,7 +207,11 @@ export default function ImmigrantLegacyLifePage() {
       </section>
 
       {/* IUL Education Section */}
-      <IULEducationSection brand={brand} />
+      <IULEducationSection brand={{
+        id: brandConfig.id,
+        name: brandConfig.name,
+        displayName: brandConfig.displayName
+      }} />
 
       {/* Comparison Section */}
       <section className="py-16 bg-gray-50">
@@ -254,7 +267,7 @@ export default function ImmigrantLegacyLifePage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
-              onClick={() => setShowComprehensiveFunnel(true)}
+              onClick={() => setShowImmigrantFunnel(true)}
               className="bg-white text-cyan-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center"
             >
               <Flag className="h-5 w-5 mr-2" />
@@ -290,8 +303,8 @@ export default function ImmigrantLegacyLifePage() {
             <div>
               <h3 className="font-semibold mb-4">Contact</h3>
               <div className="space-y-2 text-gray-400">
-                <p>{brand.phone}</p>
-                <p>{brand.email}</p>
+                <p>(555) 123-4572</p>
+                <p>info@immigrantlegacylife.com</p>
               </div>
             </div>
             <div>
@@ -317,12 +330,12 @@ export default function ImmigrantLegacyLifePage() {
         </div>
       </footer>
 
-      {/* Comprehensive Funnel Modal */}
-      {showComprehensiveFunnel && (
-        <ComprehensiveFunnel
-          brand={brand}
+      {/* Dynamic Funnel Modal */}
+      {showImmigrantFunnel && brandConfig && (
+        <DynamicFunnel
+          brandConfig={brandConfig}
           onComplete={handleFunnelComplete}
-          onClose={() => setShowComprehensiveFunnel(false)}
+          onClose={() => setShowImmigrantFunnel(false)}
         />
       )}
     </div>

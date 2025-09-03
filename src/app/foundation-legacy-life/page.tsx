@@ -1,23 +1,33 @@
 'use client';
 
-import { useState } from 'react';
-import ComprehensiveFunnel from '@/components/ComprehensiveFunnel';
-import { getBrandById } from '@/config/brands';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight, Phone, Mail, Home, CheckCircle, Star, Clock, Award, Heart, ChartLine, Shield, Users, Building } from 'lucide-react';
-import { FoundationLogo } from '@/components/brand-logos/FoundationLogo';
+import { useEffect, useState } from 'react';
+import { useFunnelStore } from '../../store/funnelStore';
+import { getBrandConfig } from '../../config/brands';
+import DynamicFunnel from '../../components/DynamicFunnel';
+import IULEducationSection from '../../components/IULEducationSection';
+import { Button } from '../../components/ui/button';
+import { Card, CardContent } from '../../components/ui/card';
+import { ArrowRight, Phone, Heart, CheckCircle, Star, Award, Shield, Clock, ChartLine, Zap, Users, Home } from 'lucide-react';
 
 export default function FoundationLegacyLifePage() {
-  const [showComprehensiveFunnel, setShowComprehensiveFunnel] = useState(false);
-  const brand = getBrandById('foundation-legacy-life');
+  const { openModal } = useFunnelStore();
+  const [showFoundationFunnel, setShowFoundationFunnel] = useState(false);
+  const brandConfig = getBrandConfig('foundation-legacy-life');
+
+  useEffect(() => {
+    if (brandConfig) {
+      openModal();
+    }
+  }, [brandConfig, openModal]);
 
   const handleFunnelComplete = (data: any) => {
     console.log('Foundation funnel completed:', data);
-    setShowComprehensiveFunnel(false);
+    setShowFoundationFunnel(false);
   };
 
-  if (!brand) return <div>Brand not found</div>;
+  if (!brandConfig) {
+    return <div>Brand not found</div>;
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -27,14 +37,14 @@ export default function FoundationLegacyLifePage() {
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center">
               <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center mr-3">
-                <FoundationLogo className="h-8 w-8" />
+                <Heart className="h-8 w-8 text-white" />
               </div>
               <span className="text-2xl font-bold text-gray-900" style={{
                 fontSize: '1.7rem',
-                color: '#7c3aed',
+                color: '#9333ea',
                 fontWeight: 800,
                 letterSpacing: '0.02em',
-                textShadow: '0 2px 8px rgba(124,58,237,0.07)',
+                textShadow: '0 2px 8px rgba(147,51,234,0.07)',
                 fontStyle: 'oblique 10deg',
                 transform: 'skew(-4deg)',
                 display: 'inline-block'
@@ -43,9 +53,9 @@ export default function FoundationLegacyLifePage() {
               </span>
             </div>
             <div className="flex items-center space-x-6">
-              <a href={`tel:${brand.phone}`} className="flex items-center text-gray-700 hover:text-gray-900">
+              <a href="tel:(555) 123-4568" className="flex items-center text-gray-700 hover:text-gray-900">
                 <Phone className="h-5 w-5 mr-2" />
-                <span className="font-semibold">{brand.phone}</span>
+                <span className="font-semibold">(555) 123-4568</span>
               </a>
             </div>
           </div>
@@ -55,18 +65,17 @@ export default function FoundationLegacyLifePage() {
       {/* Hero Section */}
       <section 
         className="py-16 bg-gradient-to-br from-purple-50 to-indigo-100 cursor-pointer hover:from-purple-100 hover:to-indigo-200 transition-all duration-300"
-        onClick={() => setShowComprehensiveFunnel(true)}
+        onClick={() => setShowFoundationFunnel(true)}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-8">
             <div className="space-y-4">
               <h1 className="text-5xl font-bold text-gray-900 leading-tight">
-                <span className="text-purple-600">A future built</span><br />
-                <span className="text-gray-800">on security.</span>
+                <span className="text-purple-600">Build your foundation.</span><br />
+                <span className="text-gray-800">Secure your family.</span>
               </h1>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Every strong future is built on a foundation. Protect your loved ones and start building 
-                generational wealth now with life insurance designed for new families.
+                Create a solid financial foundation that protects your family's future and builds generational wealth. Our family-focused life insurance plans grow with you through every stage of life.
               </p>
               <div className="flex items-center justify-center space-x-4 text-sm text-gray-500">
                 <div className="flex items-center">
@@ -75,25 +84,23 @@ export default function FoundationLegacyLifePage() {
                 </div>
                 <div className="flex items-center">
                   <Award className="h-4 w-4 text-purple-500 mr-1" />
-                  <span>4.8/5 Rating</span>
+                  <span>4.9/5 Rating</span>
                 </div>
               </div>
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
-                onClick={(e) => { e.stopPropagation(); setShowComprehensiveFunnel(true); }}
+                onClick={() => setShowFoundationFunnel(true)}
                 className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center"
-                style={{ backgroundColor: brand.primaryColor }}
               >
-                <Building className="h-5 w-5 mr-2" />
-                Build My Family's Foundation
+                <Heart className="h-5 w-5 mr-2" />
+                Protect My Family
                 <ArrowRight className="h-5 w-5 ml-2" />
               </Button>
               <Button 
                 variant="outline" 
                 className="px-8 py-4 text-lg font-semibold rounded-lg border-2 border-purple-600 text-purple-600 hover:bg-purple-50"
-                onClick={(e) => e.stopPropagation()}
               >
                 <Phone className="h-5 w-5 mr-2" />
                 Talk to an Expert
@@ -104,46 +111,94 @@ export default function FoundationLegacyLifePage() {
       </section>
 
       {/* Benefits Section */}
-      <section
-        className="py-16 bg-white cursor-pointer hover:bg-gray-50 transition-all duration-300"
-        onClick={() => setShowComprehensiveFunnel(true)}
-      >
+      <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-4xl font-bold text-center text-gray-900 mb-12">
-            Protection Plans for New Families & First-Time Homeowners
+            Protection Plans for Families & Foundation Building
           </h2>
+          
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Card className="text-center p-6">
-              <CardContent className="space-y-4">
-                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto">
+            <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <CardContent className="pt-8">
+                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Shield className="h-8 w-8 text-purple-600" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900">Family Protection</h3>
-                <p className="text-gray-600">
-                  Protect your loved ones and secure your family's future.
-                </p>
+                <h3 className="text-xl font-bold mb-3">Whole Life Insurance</h3>
+                <p className="text-gray-600 mb-6">Lifetime protection with guaranteed cash value that grows with your family.</p>
+                <ul className="space-y-2 text-left">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-purple-500" />
+                    <span className="text-sm">Guaranteed death benefit</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-purple-500" />
+                    <span className="text-sm">Cash value for opportunities</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-purple-500" />
+                    <span className="text-sm">Fixed premiums</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-purple-500" />
+                    <span className="text-sm">Living benefits included</span>
+                  </li>
+                </ul>
               </CardContent>
             </Card>
-            <Card className="text-center p-6">
-              <CardContent className="space-y-4">
-                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto">
-                  <ChartLine className="h-8 w-8 text-purple-600" />
+            
+            <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <CardContent className="pt-8">
+                <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Clock className="h-8 w-8 text-indigo-600" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900">Wealth Building</h3>
-                <p className="text-gray-600">
-                  Start building generational wealth for your children.
-                </p>
+                <h3 className="text-xl font-bold mb-3">Term Insurance</h3>
+                <p className="text-gray-600 mb-6">Affordable coverage during your family's early years with conversion options.</p>
+                <ul className="space-y-2 text-left">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-purple-500" />
+                    <span className="text-sm">Lower initial premiums</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-purple-500" />
+                    <span className="text-sm">Flexible term lengths</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-purple-500" />
+                    <span className="text-sm">Convert to permanent later</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-purple-500" />
+                    <span className="text-sm">Living benefits available</span>
+                  </li>
+                </ul>
               </CardContent>
             </Card>
-            <Card className="text-center p-6">
-              <CardContent className="space-y-4">
-                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto">
-                  <Heart className="h-8 w-8 text-purple-600" />
+            
+            <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <CardContent className="pt-8">
+                <div className="w-16 h-16 bg-violet-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <ChartLine className="h-8 w-8 text-violet-600" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900">College Funding</h3>
-                <p className="text-gray-600">
-                  Fund your children's education with tax-free growth.
-                </p>
+                <h3 className="text-xl font-bold mb-3">Indexed Universal Life</h3>
+                <p className="text-gray-600 mb-6">Market-linked growth potential with downside protection for wealth building.</p>
+                <ul className="space-y-2 text-left">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-purple-500" />
+                    <span className="text-sm">Market-linked growth</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-purple-500" />
+                    <span className="text-sm">Downside protection</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-purple-500" />
+                    <span className="text-sm">Flexible premiums</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-purple-500" />
+                    <span className="text-sm">Advanced living benefits</span>
+                  </li>
+                </ul>
               </CardContent>
             </Card>
           </div>
@@ -151,113 +206,17 @@ export default function FoundationLegacyLifePage() {
       </section>
 
       {/* IUL Education Section */}
-      <section className="py-16 bg-purple-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              What is Indexed Universal Life (IUL)?
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Start Building Generational Wealth Today
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-12">
-            <div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">
-                Think of IUL as Your Family's Money Tree
-              </h3>
-              <div className="space-y-4">
-                <div className="flex items-start">
-                  <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center mr-4 mt-1">
-                    <span className="text-white font-bold text-sm">1</span>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900">Plant the Seed Early</h4>
-                    <p className="text-gray-600">Start with what you can afford - even $50/month can grow into $500,000+ for your family.</p>
-                  </div>
-                </div>
-                <div className="flex items-start">
-                  <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center mr-4 mt-1">
-                    <span className="text-white font-bold text-sm">2</span>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900">Watch It Grow Tax-Free</h4>
-                    <p className="text-gray-600">Your money grows with the market but never loses value, and it's all tax-free.</p>
-                  </div>
-                </div>
-                <div className="flex items-start">
-                  <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center mr-4 mt-1">
-                    <span className="text-white font-bold text-sm">3</span>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900">Harvest for Your Family</h4>
-                    <p className="text-gray-600">Use the cash value for college, emergencies, or pass it on to future generations.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-white p-8 rounded-lg shadow-lg">
-              <h4 className="text-lg font-semibold text-gray-900 mb-4">Real Example: The Rodriguez Family</h4>
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span>Age 28: Started IUL</span>
-                  <span className="font-semibold">$250,000 coverage</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Age 35: Cash Value</span>
-                  <span className="font-semibold text-green-600">$35,000</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Age 42: Used for College</span>
-                  <span className="font-semibold text-blue-600">$50,000 loan</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Age 50: Cash Value</span>
-                  <span className="font-semibold text-green-600">$120,000</span>
-                </div>
-                <div className="border-t pt-2 mt-4">
-                  <p className="text-gray-600 text-xs">*Example shows how IUL can fund education while continuing to grow.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-lg p-8">
-            <h3 className="text-2xl font-bold text-center text-gray-900 mb-6">
-              Common Family Questions About IUL
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h4 className="font-semibold text-gray-900 mb-2">"We're just starting out. How can we afford this?"</h4>
-                <p className="text-gray-600 text-sm">Start small! Even $25-50/month can grow significantly over time. Premiums can increase as your income grows.</p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-gray-900 mb-2">"What if we need money for emergencies?"</h4>
-                <p className="text-gray-600 text-sm">You can access your cash value tax-free for emergencies, medical expenses, or unexpected costs.</p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-gray-900 mb-2">"How is this different from a 529 college plan?"</h4>
-                <p className="text-gray-600 text-sm">IUL is more flexible - you can use it for anything, not just education, and it provides life insurance protection.</p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-gray-900 mb-2">"What if we can't keep paying premiums?"</h4>
-                <p className="text-gray-600 text-sm">IUL offers flexible premiums. You can reduce or skip payments using your cash value to keep the policy active.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <IULEducationSection brand={{
+        id: brandConfig.id,
+        name: brandConfig.name,
+        displayName: brandConfig.displayName
+      }} />
 
       {/* Comparison Section */}
-      <section 
-        className="py-16 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-all duration-300"
-        onClick={() => setShowComprehensiveFunnel(true)}
-      >
+      <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-4xl font-bold text-center text-gray-900 mb-12">
-            Family Insurance vs Traditional Options... What's the difference?
+            Foundation Insurance vs Traditional Options... What's the difference?
           </h2>
           
           <div className="overflow-x-auto">
@@ -272,23 +231,23 @@ export default function FoundationLegacyLifePage() {
               <tbody>
                 <tr className="bg-white">
                   <td className="border border-gray-300 px-6 py-4 font-semibold">Family-Focused Planning</td>
-                  <td className="border border-gray-300 px-6 py-4 text-center text-gray-600">Generic</td>
+                  <td className="border border-gray-300 px-6 py-4 text-center text-gray-600">None</td>
                   <td className="border border-gray-300 px-6 py-4 text-center text-purple-600 font-semibold">✓ Customized</td>
                 </tr>
                 <tr className="bg-gray-50">
-                  <td className="border border-gray-300 px-6 py-4 font-semibold">Homeowner Benefits</td>
-                  <td className="border border-gray-300 px-6 py-4 text-center text-gray-600">None</td>
-                  <td className="border border-gray-300 px-6 py-4 text-center text-purple-600 font-semibold">✓ Mortgage Protection</td>
+                  <td className="border border-gray-300 px-6 py-4 font-semibold">Generational Wealth</td>
+                  <td className="border border-gray-300 px-6 py-4 text-center text-gray-600">Limited</td>
+                  <td className="border border-gray-300 px-6 py-4 text-center text-purple-600 font-semibold">✓ Comprehensive</td>
                 </tr>
                 <tr className="bg-white">
-                  <td className="border border-gray-300 px-6 py-4 font-semibold">Child Education Planning</td>
-                  <td className="border border-gray-300 px-6 py-4 text-center text-gray-600">Limited</td>
-                  <td className="border border-gray-300 px-6 py-4 text-center text-purple-600 font-semibold">✓ Education Funding</td>
+                  <td className="border border-gray-300 px-6 py-4 font-semibold">Home Ownership Support</td>
+                  <td className="border border-gray-300 px-6 py-4 text-center text-gray-600">Basic</td>
+                  <td className="border border-gray-300 px-6 py-4 text-center text-purple-600 font-semibold">✓ Advanced</td>
                 </tr>
                 <tr className="bg-gray-50">
-                  <td className="border border-gray-300 px-6 py-4 font-semibold">New Family Guidance</td>
-                  <td className="border border-gray-300 px-6 py-4 text-center text-gray-600">None</td>
-                  <td className="border border-gray-300 px-6 py-4 text-center text-purple-600 font-semibold">✓ Expert Support</td>
+                  <td className="border border-gray-300 px-6 py-4 font-semibold">Family Support</td>
+                  <td className="border border-gray-300 px-6 py-4 text-center text-gray-600">Generic</td>
+                  <td className="border border-gray-300 px-6 py-4 text-center text-purple-600 font-semibold">✓ Expert Guidance</td>
                 </tr>
               </tbody>
             </table>
@@ -297,23 +256,20 @@ export default function FoundationLegacyLifePage() {
       </section>
 
       {/* CTA Section */}
-      <section 
-        className="py-16 bg-purple-600 cursor-pointer hover:bg-purple-700 transition-all duration-300"
-        onClick={() => setShowComprehensiveFunnel(true)}
-      >
+      <section className="py-16 bg-purple-600">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold text-white mb-6">
             Ready to Build Your Family's Foundation?
           </h2>
           <p className="text-xl text-purple-100 mb-8 max-w-2xl mx-auto">
-            Join thousands of families who've already secured their future and started building generational wealth through our family-focused life insurance plans.
+            Join thousands of families who've already secured their futures and built generational wealth through our foundation-focused life insurance plans.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
-              onClick={(e) => { e.stopPropagation(); setShowComprehensiveFunnel(true); }}
+              onClick={() => setShowFoundationFunnel(true)}
               className="bg-white text-purple-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center"
             >
-              <Building className="h-5 w-5 mr-2" />
+              <Heart className="h-5 w-5 mr-2" />
               Start My Application
               <ArrowRight className="h-5 w-5 ml-2" />
             </Button>
@@ -335,19 +291,19 @@ export default function FoundationLegacyLifePage() {
             <div>
               <div className="flex items-center mb-4">
                 <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center mr-3">
-                  <FoundationLogo className="h-6 w-6" />
+                  <Heart className="h-6 w-6 text-white" />
                 </div>
                 <span className="text-xl font-bold">Foundation Legacy Life</span>
               </div>
               <p className="text-gray-400">
-                Building strong family foundations since 2024.
+                Building family foundations since 2024.
               </p>
             </div>
             <div>
               <h3 className="font-semibold mb-4">Contact</h3>
               <div className="space-y-2 text-gray-400">
-                <p>{brand.phone}</p>
-                <p>{brand.email}</p>
+                <p>(555) 123-4568</p>
+                <p>info@foundationlegacylife.com</p>
               </div>
             </div>
             <div>
@@ -373,12 +329,12 @@ export default function FoundationLegacyLifePage() {
         </div>
       </footer>
 
-      {/* Comprehensive Funnel Modal */}
-      {showComprehensiveFunnel && (
-        <ComprehensiveFunnel
-          brand={brand}
+      {/* Dynamic Funnel Modal */}
+      {showFoundationFunnel && brandConfig && (
+        <DynamicFunnel
+          brandConfig={brandConfig}
           onComplete={handleFunnelComplete}
-          onClose={() => setShowComprehensiveFunnel(false)}
+          onClose={() => setShowFoundationFunnel(false)}
         />
       )}
     </div>

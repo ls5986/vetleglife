@@ -1,23 +1,32 @@
 'use client';
 
-import { useState } from 'react';
-import ComprehensiveFunnel from '@/components/ComprehensiveFunnel';
-import { getBrandById } from '@/config/brands';
+import { useState, useEffect } from 'react';
+import DynamicFunnel from '@/components/DynamicFunnel';
+import { getBrandConfig } from '@/config/brands';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowRight, Phone, Mail, Shield, CheckCircle, Star, Clock, Award, Heart, ChartLine, Zap, Target, Users, ShieldCheck, AlertTriangle } from 'lucide-react';
 import IULEducationSection from '@/components/IULEducationSection';
+import { useFunnelStore } from '@/store/funnelStore';
 
 export default function ResponderLegacyLifePage() {
-  const [showComprehensiveFunnel, setShowComprehensiveFunnel] = useState(false);
-  const brand = getBrandById('responder-legacy-life');
+  const [showResponderFunnel, setShowResponderFunnel] = useState(false);
+  const brandConfig = getBrandConfig('responder-legacy-life');
+  const { openModal, resetFunnel } = useFunnelStore();
 
   const handleFunnelComplete = (data: any) => {
     console.log('Responder funnel completed:', data);
-    setShowComprehensiveFunnel(false);
+    setShowResponderFunnel(false);
   };
 
-  if (!brand) return <div>Brand not found</div>;
+  const handleStartFunnel = () => {
+    console.log('Starting responder funnel...');
+    resetFunnel();
+    openModal();
+    setShowResponderFunnel(true);
+  };
+
+  if (!brandConfig) return <div>Brand not found</div>;
 
   return (
     <div className="min-h-screen bg-white">
@@ -43,9 +52,9 @@ export default function ResponderLegacyLifePage() {
               </span>
             </div>
             <div className="flex items-center space-x-6">
-              <a href={`tel:${brand.phone}`} className="flex items-center text-gray-700 hover:text-gray-900">
+              <a href="tel:(555) 123-4573" className="flex items-center text-gray-700 hover:text-gray-900">
                 <Phone className="h-5 w-5 mr-2" />
-                <span className="font-semibold">{brand.phone}</span>
+                <span className="font-semibold">(555) 123-4573</span>
               </a>
             </div>
           </div>
@@ -55,7 +64,7 @@ export default function ResponderLegacyLifePage() {
       {/* Hero Section */}
       <section 
         className="py-16 bg-gradient-to-br from-pink-50 to-rose-100 cursor-pointer hover:from-pink-100 hover:to-rose-200 transition-all duration-300"
-        onClick={() => setShowComprehensiveFunnel(true)}
+        onClick={handleStartFunnel}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-8">
@@ -82,9 +91,8 @@ export default function ResponderLegacyLifePage() {
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
-                onClick={() => setShowComprehensiveFunnel(true)}
+                onClick={(e) => { e.stopPropagation(); handleStartFunnel(); }}
                 className="bg-pink-600 hover:bg-pink-700 text-white px-8 py-4 text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center"
-                style={{ backgroundColor: brand.primaryColor }}
               >
                 <AlertTriangle className="h-5 w-5 mr-2" />
                 Protect My Family
@@ -103,10 +111,13 @@ export default function ResponderLegacyLifePage() {
       </section>
 
       {/* Benefits Section */}
-      <section className="py-16 bg-white">
+      <section 
+        className="py-16 bg-white cursor-pointer hover:bg-gray-50 transition-all duration-300"
+        onClick={handleStartFunnel}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-4xl font-bold text-center text-gray-900 mb-12">
-            Protection Plans for First Responders
+            Protection Plans for First Responders & Emergency Personnel
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -168,8 +179,8 @@ export default function ResponderLegacyLifePage() {
             
             <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
               <CardContent className="pt-8">
-                <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <ChartLine className="h-8 w-8 text-rose-600" />
+                <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <ChartLine className="h-8 w-8 text-amber-600" />
                 </div>
                 <h3 className="text-xl font-bold mb-3">Indexed Universal Life</h3>
                 <p className="text-gray-600 mb-6">Market-linked growth potential with downside protection for wealth building.</p>
@@ -198,13 +209,13 @@ export default function ResponderLegacyLifePage() {
       </section>
 
       {/* IUL Education Section */}
-      <IULEducationSection brand={brand} />
+      <IULEducationSection brand={brandConfig} />
 
       {/* Comparison Section */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-4xl font-bold text-center text-gray-900 mb-12">
-            Responder Insurance vs Traditional Options... What's the difference?
+            Department Benefits vs Our Benefits... What's the difference?
           </h2>
           
           <div className="overflow-x-auto">
@@ -212,30 +223,30 @@ export default function ResponderLegacyLifePage() {
               <thead>
                 <tr className="bg-pink-600 text-white">
                   <th className="border border-gray-300 px-6 py-4 text-left">Feature</th>
-                  <th className="border border-gray-300 px-6 py-4 text-center">Traditional Insurance</th>
+                  <th className="border border-gray-300 px-6 py-4 text-center">Department Benefits</th>
                   <th className="border border-gray-300 px-6 py-4 text-center bg-pink-700">Responder Legacy Life</th>
                 </tr>
               </thead>
               <tbody>
                 <tr className="bg-white">
-                  <td className="border border-gray-300 px-6 py-4 font-semibold">First Responder Benefits</td>
-                  <td className="border border-gray-300 px-6 py-4 text-center text-gray-600">None</td>
-                  <td className="border border-gray-300 px-6 py-4 text-center text-pink-600 font-semibold">✓ Customized</td>
+                  <td className="border border-gray-300 px-6 py-4 font-semibold">First Responder-Specific Benefits</td>
+                  <td className="border border-gray-300 px-6 py-4 text-center text-gray-600">Basic</td>
+                  <td className="border border-gray-300 px-6 py-4 text-center text-pink-600 font-semibold">✓ Enhanced</td>
                 </tr>
                 <tr className="bg-gray-50">
-                  <td className="border border-gray-300 px-6 py-4 font-semibold">Shift Schedule Support</td>
+                  <td className="border border-gray-300 px-6 py-4 font-semibold">Line-of-Duty Protection</td>
                   <td className="border border-gray-300 px-6 py-4 text-center text-gray-600">Limited</td>
-                  <td className="border border-gray-300 px-6 py-4 text-center text-pink-600 font-semibold">✓ 24/7 Coverage</td>
+                  <td className="border border-gray-300 px-6 py-4 text-center text-pink-600 font-semibold">✓ Comprehensive</td>
                 </tr>
                 <tr className="bg-white">
-                  <td className="border border-gray-300 px-6 py-4 font-semibold">High-Risk Occupation</td>
-                  <td className="border border-gray-300 px-6 py-4 text-center text-gray-600">Standard Rates</td>
-                  <td className="border border-gray-300 px-6 py-4 text-center text-pink-600 font-semibold">✓ Preferred Rates</td>
+                  <td className="border border-gray-300 px-6 py-4 font-semibold">Living Benefits</td>
+                  <td className="border border-gray-300 px-6 py-4 text-center text-gray-600">Basic</td>
+                  <td className="border border-gray-300 px-6 py-4 text-center text-pink-600 font-semibold">✓ Advanced</td>
                 </tr>
                 <tr className="bg-gray-50">
-                  <td className="border border-gray-300 px-6 py-4 font-semibold">Responder Expert Support</td>
-                  <td className="border border-gray-300 px-6 py-4 text-center text-gray-600">Generic</td>
-                  <td className="border border-gray-300 px-6 py-4 text-center text-pink-600 font-semibold">✓ Responder Specialists</td>
+                  <td className="border border-gray-300 px-6 py-4 font-semibold">Wealth Building</td>
+                  <td className="border border-gray-300 px-6 py-4 text-center text-gray-600">None</td>
+                  <td className="border border-gray-300 px-6 py-4 text-center text-pink-600 font-semibold">✓ Cash Value Growth</td>
                 </tr>
               </tbody>
             </table>
@@ -250,14 +261,14 @@ export default function ResponderLegacyLifePage() {
             Ready to Protect Your Family?
           </h2>
           <p className="text-xl text-pink-100 mb-8 max-w-2xl mx-auto">
-            Join thousands of first responders who've already secured their families with our responder-focused life insurance plans.
+            Join thousands of first responders who've already secured their families and started building generational wealth through our responder-focused life insurance plans.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
-              onClick={() => setShowComprehensiveFunnel(true)}
+              onClick={handleStartFunnel}
               className="bg-white text-pink-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center"
             >
-              <AlertTriangle className="h-5 w-5 mr-2" />
+              <ShieldCheck className="h-5 w-5 mr-2" />
               Start My Application
               <ArrowRight className="h-5 w-5 ml-2" />
             </Button>
@@ -290,8 +301,8 @@ export default function ResponderLegacyLifePage() {
             <div>
               <h3 className="font-semibold mb-4">Contact</h3>
               <div className="space-y-2 text-gray-400">
-                <p>{brand.phone}</p>
-                <p>{brand.email}</p>
+                <p>(555) 123-4573</p>
+                <p>info@responderlegacylife.com</p>
               </div>
             </div>
             <div>
@@ -317,12 +328,12 @@ export default function ResponderLegacyLifePage() {
         </div>
       </footer>
 
-      {/* Comprehensive Funnel Modal */}
-      {showComprehensiveFunnel && (
-        <ComprehensiveFunnel
-          brand={brand}
+      {/* Dynamic Funnel Modal */}
+      {showResponderFunnel && brandConfig && (
+        <DynamicFunnel
+          brandConfig={brandConfig}
           onComplete={handleFunnelComplete}
-          onClose={() => setShowComprehensiveFunnel(false)}
+          onClose={() => setShowResponderFunnel(false)}
         />
       )}
     </div>

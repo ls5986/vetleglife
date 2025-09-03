@@ -1,24 +1,33 @@
 'use client';
 
-import { useState } from 'react';
-import ComprehensiveFunnel from '@/components/ComprehensiveFunnel';
-import { getBrandById } from '@/config/brands';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight, Phone, Mail, Wrench, CheckCircle, Star, Clock, Award, Heart, ChartLine, Zap, Target, Users, ShieldCheck, HardHat, Shield } from 'lucide-react';
-import { TradeLogo } from '@/components/brand-logos/TradeLogo';
-import IULEducationSection from '@/components/IULEducationSection';
+import { useEffect, useState } from 'react';
+import { useFunnelStore } from '../../store/funnelStore';
+import { getBrandConfig } from '../../config/brands';
+import DynamicFunnel from '../../components/DynamicFunnel';
+import IULEducationSection from '../../components/IULEducationSection';
+import { Button } from '../../components/ui/button';
+import { Card, CardContent } from '../../components/ui/card';
+import { ArrowRight, Phone, Wrench, CheckCircle, Star, Award, Shield, Clock, ChartLine, Zap, Cog, Settings } from 'lucide-react';
 
 export default function TradeLegacyLifePage() {
-  const [showComprehensiveFunnel, setShowComprehensiveFunnel] = useState(false);
-  const brand = getBrandById('trade-legacy-life');
+  const { openModal } = useFunnelStore();
+  const [showTradeFunnel, setShowTradeFunnel] = useState(false);
+  const brandConfig = getBrandConfig('trade-legacy-life');
+
+  useEffect(() => {
+    if (brandConfig) {
+      openModal();
+    }
+  }, [brandConfig, openModal]);
 
   const handleFunnelComplete = (data: any) => {
     console.log('Trade funnel completed:', data);
-    setShowComprehensiveFunnel(false);
+    setShowTradeFunnel(false);
   };
 
-  if (!brand) return <div>Brand not found</div>;
+  if (!brandConfig) {
+    return <div>Brand not found</div>;
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -27,15 +36,15 @@ export default function TradeLegacyLifePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center">
-              <div className="w-12 h-12 bg-red-600 rounded-lg flex items-center justify-center mr-3">
-                <TradeLogo className="h-8 w-8" />
+              <div className="w-12 h-12 bg-orange-600 rounded-lg flex items-center justify-center mr-3">
+                <Wrench className="h-8 w-8 text-white" />
               </div>
               <span className="text-2xl font-bold text-gray-900" style={{
                 fontSize: '1.7rem',
-                color: '#dc2626',
+                color: '#ea580c',
                 fontWeight: 800,
                 letterSpacing: '0.02em',
-                textShadow: '0 2px 8px rgba(220,38,38,0.07)',
+                textShadow: '0 2px 8px rgba(234,88,12,0.07)',
                 fontStyle: 'oblique 10deg',
                 transform: 'skew(-4deg)',
                 display: 'inline-block'
@@ -44,9 +53,9 @@ export default function TradeLegacyLifePage() {
               </span>
             </div>
             <div className="flex items-center space-x-6">
-              <a href={`tel:${brand.phone}`} className="flex items-center text-gray-700 hover:text-gray-900">
+              <a href="tel:(555) 123-4568" className="flex items-center text-gray-700 hover:text-gray-900">
                 <Phone className="h-5 w-5 mr-2" />
-                <span className="font-semibold">{brand.phone}</span>
+                <span className="font-semibold">(555) 123-4568</span>
               </a>
             </div>
           </div>
@@ -55,27 +64,26 @@ export default function TradeLegacyLifePage() {
 
       {/* Hero Section */}
       <section 
-        className="py-16 bg-gradient-to-br from-red-50 to-orange-100 cursor-pointer hover:from-red-100 hover:to-orange-200 transition-all duration-300"
-        onClick={() => setShowComprehensiveFunnel(true)}
+        className="py-16 bg-gradient-to-br from-orange-50 to-amber-100 cursor-pointer hover:from-orange-100 hover:to-amber-200 transition-all duration-300"
+        onClick={() => setShowTradeFunnel(true)}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-8">
             <div className="space-y-4">
               <h1 className="text-5xl font-bold text-gray-900 leading-tight">
-                <span className="text-red-600">For the people who</span><br />
-                <span className="text-gray-800">build, fix, and make.</span>
+                <span className="text-orange-600">Master your trade.</span><br />
+                <span className="text-gray-800">Secure your future.</span>
               </h1>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                You work hard every day with your hands. We'll make sure your hard work pays off 
-                for generations with life insurance designed for skilled trades.
+                Skilled tradespeople deserve skilled protection. Our trade-focused life insurance plans understand your unique needs and provide the security your family deserves.
               </p>
               <div className="flex items-center justify-center space-x-4 text-sm text-gray-500">
                 <div className="flex items-center">
-                  <Star className="h-4 w-4 text-red-500 mr-1" />
-                  <span>Trusted by 15,000+ Tradespeople</span>
+                  <Star className="h-4 w-4 text-orange-500 mr-1" />
+                  <span>Trusted by 30,000+ Tradespeople</span>
                 </div>
                 <div className="flex items-center">
-                  <Award className="h-4 w-4 text-red-500 mr-1" />
+                  <Award className="h-4 w-4 text-orange-500 mr-1" />
                   <span>4.9/5 Rating</span>
                 </div>
               </div>
@@ -83,17 +91,16 @@ export default function TradeLegacyLifePage() {
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
-                onClick={(e) => { e.stopPropagation(); setShowComprehensiveFunnel(true); }}
-                className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center"
-                style={{ backgroundColor: brand.primaryColor }}
+                onClick={() => setShowTradeFunnel(true)}
+                className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-4 text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center"
               >
-                <HardHat className="h-5 w-5 mr-2" />
-                Protect My Hard Work
+                <Wrench className="h-5 w-5 mr-2" />
+                Protect My Trade
                 <ArrowRight className="h-5 w-5 ml-2" />
               </Button>
               <Button 
                 variant="outline" 
-                className="px-8 py-4 text-lg font-semibold rounded-lg border-2 border-red-600 text-red-600 hover:bg-red-50"
+                className="px-8 py-4 text-lg font-semibold rounded-lg border-2 border-orange-600 text-orange-600 hover:bg-orange-50"
               >
                 <Phone className="h-5 w-5 mr-2" />
                 Talk to an Expert
@@ -104,38 +111,35 @@ export default function TradeLegacyLifePage() {
       </section>
 
       {/* Benefits Section */}
-      <section 
-        className="py-16 bg-white cursor-pointer hover:bg-gray-50 transition-all duration-300"
-        onClick={() => setShowComprehensiveFunnel(true)}
-      >
+      <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-4xl font-bold text-center text-gray-900 mb-12">
-            Protection Plans for Skilled Trades & Blue-Collar Workers
+            Protection Plans for Skilled Tradespeople
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
               <CardContent className="pt-8">
-                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Shield className="h-8 w-8 text-red-600" />
+                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Shield className="h-8 w-8 text-orange-600" />
                 </div>
                 <h3 className="text-xl font-bold mb-3">Whole Life Insurance</h3>
-                <p className="text-gray-600 mb-6">Lifetime protection with guaranteed cash value that grows with your business.</p>
+                <p className="text-gray-600 mb-6">Lifetime protection with guaranteed cash value that grows with your trade.</p>
                 <ul className="space-y-2 text-left">
                   <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-red-500" />
+                    <CheckCircle className="h-4 w-4 text-orange-500" />
                     <span className="text-sm">Guaranteed death benefit</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-red-500" />
-                    <span className="text-sm">Cash value for tools/equipment</span>
+                    <CheckCircle className="h-4 w-4 text-orange-500" />
+                    <span className="text-sm">Cash value for opportunities</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-red-500" />
+                    <CheckCircle className="h-4 w-4 text-orange-500" />
                     <span className="text-sm">Fixed premiums</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-red-500" />
+                    <CheckCircle className="h-4 w-4 text-orange-500" />
                     <span className="text-sm">Living benefits included</span>
                   </li>
                 </ul>
@@ -144,26 +148,26 @@ export default function TradeLegacyLifePage() {
             
             <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
               <CardContent className="pt-8">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Clock className="h-8 w-8 text-blue-600" />
+                <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Clock className="h-8 w-8 text-amber-600" />
                 </div>
                 <h3 className="text-xl font-bold mb-3">Term Insurance</h3>
-                <p className="text-gray-600 mb-6">Affordable coverage during your working years with conversion options.</p>
+                <p className="text-gray-600 mb-6">Affordable coverage during your trade's early years with conversion options.</p>
                 <ul className="space-y-2 text-left">
                   <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-red-500" />
+                    <CheckCircle className="h-4 w-4 text-orange-500" />
                     <span className="text-sm">Lower initial premiums</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-red-500" />
+                    <CheckCircle className="h-4 w-4 text-orange-500" />
                     <span className="text-sm">Flexible term lengths</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-red-500" />
+                    <CheckCircle className="h-4 w-4 text-orange-500" />
                     <span className="text-sm">Convert to permanent later</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-red-500" />
+                    <CheckCircle className="h-4 w-4 text-orange-500" />
                     <span className="text-sm">Living benefits available</span>
                   </li>
                 </ul>
@@ -172,26 +176,26 @@ export default function TradeLegacyLifePage() {
             
             <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
               <CardContent className="pt-8">
-                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <ChartLine className="h-8 w-8 text-orange-600" />
+                <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <ChartLine className="h-8 w-8 text-yellow-600" />
                 </div>
                 <h3 className="text-xl font-bold mb-3">Indexed Universal Life</h3>
                 <p className="text-gray-600 mb-6">Market-linked growth potential with downside protection for wealth building.</p>
                 <ul className="space-y-2 text-left">
                   <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-red-500" />
+                    <CheckCircle className="h-4 w-4 text-orange-500" />
                     <span className="text-sm">Market-linked growth</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-red-500" />
+                    <CheckCircle className="h-4 w-4 text-orange-500" />
                     <span className="text-sm">Downside protection</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-red-500" />
+                    <CheckCircle className="h-4 w-4 text-orange-500" />
                     <span className="text-sm">Flexible premiums</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-red-500" />
+                    <CheckCircle className="h-4 w-4 text-orange-500" />
                     <span className="text-sm">Advanced living benefits</span>
                   </li>
                 </ul>
@@ -201,11 +205,15 @@ export default function TradeLegacyLifePage() {
         </div>
       </section>
 
+      {/* IUL Education Section */}
+      <IULEducationSection brand={{
+        id: brandConfig.id,
+        name: brandConfig.name,
+        displayName: brandConfig.displayName
+      }} />
+
       {/* Comparison Section */}
-      <section 
-        className="py-16 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-all duration-300"
-        onClick={() => setShowComprehensiveFunnel(true)}
-      >
+      <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-4xl font-bold text-center text-gray-900 mb-12">
             Trade Insurance vs Traditional Options... What's the difference?
@@ -214,32 +222,32 @@ export default function TradeLegacyLifePage() {
           <div className="overflow-x-auto">
             <table className="w-full border-collapse border border-gray-300">
               <thead>
-                <tr className="bg-red-600 text-white">
+                <tr className="bg-orange-600 text-white">
                   <th className="border border-gray-300 px-6 py-4 text-left">Feature</th>
                   <th className="border border-gray-300 px-6 py-4 text-center">Traditional Insurance</th>
-                  <th className="border border-gray-300 px-6 py-4 text-center bg-red-700">Trade Legacy Life</th>
+                  <th className="border border-gray-300 px-6 py-4 text-center bg-orange-700">Trade Legacy Life</th>
                 </tr>
               </thead>
               <tbody>
                 <tr className="bg-white">
-                  <td className="border border-gray-300 px-6 py-4 font-semibold">Trade-Specific Benefits</td>
+                  <td className="border border-gray-300 px-6 py-4 font-semibold">Trade-Specific Planning</td>
                   <td className="border border-gray-300 px-6 py-4 text-center text-gray-600">None</td>
-                  <td className="border border-gray-300 px-6 py-4 text-center text-red-600 font-semibold">✓ Customized</td>
+                  <td className="border border-gray-300 px-6 py-4 text-center text-orange-600 font-semibold">✓ Customized</td>
                 </tr>
                 <tr className="bg-gray-50">
-                  <td className="border border-gray-300 px-6 py-4 font-semibold">Equipment Protection</td>
+                  <td className="border border-gray-300 px-6 py-4 font-semibold">Apprenticeship Support</td>
                   <td className="border border-gray-300 px-6 py-4 text-center text-gray-600">Limited</td>
-                  <td className="border border-gray-300 px-6 py-4 text-center text-red-600 font-semibold">✓ Tool Funding</td>
+                  <td className="border border-gray-300 px-6 py-4 text-center text-orange-600 font-semibold">✓ Comprehensive</td>
                 </tr>
                 <tr className="bg-white">
-                  <td className="border border-gray-300 px-6 py-4 font-semibold">Union Member Benefits</td>
-                  <td className="border border-gray-300 px-6 py-4 text-center text-gray-600">None</td>
-                  <td className="border border-gray-300 px-6 py-4 text-center text-red-600 font-semibold">✓ Union Discounts</td>
+                  <td className="border border-gray-300 px-6 py-4 font-semibold">Tool & Equipment</td>
+                  <td className="border border-gray-300 px-6 py-4 text-center text-gray-600">Basic</td>
+                  <td className="border border-gray-300 px-6 py-4 text-center text-orange-600 font-semibold">✓ Advanced</td>
                 </tr>
                 <tr className="bg-gray-50">
-                  <td className="border border-gray-300 px-6 py-4 font-semibold">Trade Expert Support</td>
+                  <td className="border border-gray-300 px-6 py-4 font-semibold">Trade Support</td>
                   <td className="border border-gray-300 px-6 py-4 text-center text-gray-600">Generic</td>
-                  <td className="border border-gray-300 px-6 py-4 text-center text-red-600 font-semibold">✓ Trade Specialists</td>
+                  <td className="border border-gray-300 px-6 py-4 text-center text-orange-600 font-semibold">✓ Expert Guidance</td>
                 </tr>
               </tbody>
             </table>
@@ -248,29 +256,26 @@ export default function TradeLegacyLifePage() {
       </section>
 
       {/* CTA Section */}
-      <section 
-        className="py-16 bg-red-600 cursor-pointer hover:bg-red-700 transition-all duration-300"
-        onClick={() => setShowComprehensiveFunnel(true)}
-      >
+      <section className="py-16 bg-orange-600">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold text-white mb-6">
-            Ready to Protect Your Hard Work?
+            Ready to Protect Your Trade's Future?
           </h2>
-          <p className="text-xl text-red-100 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-orange-100 mb-8 max-w-2xl mx-auto">
             Join thousands of tradespeople who've already secured their families and built wealth through our trade-focused life insurance plans.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
-              onClick={(e) => { e.stopPropagation(); setShowComprehensiveFunnel(true); }}
-              className="bg-white text-red-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center"
+              onClick={() => setShowTradeFunnel(true)}
+              className="bg-white text-orange-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center"
             >
-              <HardHat className="h-5 w-5 mr-2" />
+              <Wrench className="h-5 w-5 mr-2" />
               Start My Application
               <ArrowRight className="h-5 w-5 ml-2" />
             </Button>
             <Button 
               variant="outline" 
-              className="px-8 py-4 text-lg font-semibold rounded-lg border-2 border-white text-white hover:bg-white hover:text-red-600"
+              className="px-8 py-4 text-lg font-semibold rounded-lg border-2 border-white text-white hover:bg-white hover:text-orange-600"
             >
               <Phone className="h-5 w-5 mr-2" />
               Schedule a Call
@@ -285,20 +290,20 @@ export default function TradeLegacyLifePage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center mb-4">
-                <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center mr-3">
+                <div className="w-10 h-10 bg-orange-600 rounded-lg flex items-center justify-center mr-3">
                   <Wrench className="h-6 w-6 text-white" />
                 </div>
                 <span className="text-xl font-bold">Trade Legacy Life</span>
               </div>
               <p className="text-gray-400">
-                Protecting the people who build, fix, and make since 2024.
+                Protecting skilled trades since 2024.
               </p>
             </div>
             <div>
               <h3 className="font-semibold mb-4">Contact</h3>
               <div className="space-y-2 text-gray-400">
-                <p>{brand.phone}</p>
-                <p>{brand.email}</p>
+                <p>(555) 123-4568</p>
+                <p>info@tradelegacylife.com</p>
               </div>
             </div>
             <div>
@@ -324,12 +329,12 @@ export default function TradeLegacyLifePage() {
         </div>
       </footer>
 
-      {/* Comprehensive Funnel Modal */}
-      {showComprehensiveFunnel && (
-        <ComprehensiveFunnel
-          brand={brand}
+      {/* Dynamic Funnel Modal */}
+      {showTradeFunnel && brandConfig && (
+        <DynamicFunnel
+          brandConfig={brandConfig}
           onComplete={handleFunnelComplete}
-          onClose={() => setShowComprehensiveFunnel(false)}
+          onClose={() => setShowTradeFunnel(false)}
         />
       )}
     </div>

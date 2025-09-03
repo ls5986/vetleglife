@@ -1,23 +1,33 @@
 'use client';
 
-import { useState } from 'react';
-import ComprehensiveFunnel from '@/components/ComprehensiveFunnel';
-import { getBrandById } from '@/config/brands';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight, Phone, Mail, TrendingUp, CheckCircle, Star, Clock, Award, Heart, ChartLine, Shield, Users, DollarSign, Zap, Target, ShieldCheck } from 'lucide-react';
-import IULEducationSection from '@/components/IULEducationSection';
+import { useEffect, useState } from 'react';
+import { useFunnelStore } from '../../store/funnelStore';
+import { getBrandConfig } from '../../config/brands';
+import DynamicFunnel from '../../components/DynamicFunnel';
+import IULEducationSection from '../../components/IULEducationSection';
+import { Button } from '../../components/ui/button';
+import { Card, CardContent } from '../../components/ui/card';
+import { ArrowRight, Phone, TrendingUp, CheckCircle, Star, Award, Shield, Clock, ChartLine, Zap } from 'lucide-react';
 
 export default function TraderLegacyLifePage() {
-  const [showComprehensiveFunnel, setShowComprehensiveFunnel] = useState(false);
-  const brand = getBrandById('trader-legacy-life');
+  const { openModal } = useFunnelStore();
+  const [showTraderFunnel, setShowTraderFunnel] = useState(false);
+  const brandConfig = getBrandConfig('trader-legacy-life');
+
+  useEffect(() => {
+    if (brandConfig) {
+      openModal();
+    }
+  }, [brandConfig, openModal]);
 
   const handleFunnelComplete = (data: any) => {
     console.log('Trader funnel completed:', data);
-    setShowComprehensiveFunnel(false);
+    setShowTraderFunnel(false);
   };
 
-  if (!brand) return <div>Brand not found</div>;
+  if (!brandConfig) {
+    return <div>Brand not found</div>;
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -43,9 +53,9 @@ export default function TraderLegacyLifePage() {
               </span>
             </div>
             <div className="flex items-center space-x-6">
-              <a href={`tel:${brand.phone}`} className="flex items-center text-gray-700 hover:text-gray-900">
+              <a href="tel:(555) 123-4575" className="flex items-center text-gray-700 hover:text-gray-900">
                 <Phone className="h-5 w-5 mr-2" />
-                <span className="font-semibold">{brand.phone}</span>
+                <span className="font-semibold">(555) 123-4575</span>
               </a>
             </div>
           </div>
@@ -55,39 +65,37 @@ export default function TraderLegacyLifePage() {
       {/* Hero Section */}
       <section 
         className="py-16 bg-gradient-to-br from-gray-50 to-slate-100 cursor-pointer hover:from-gray-100 hover:to-slate-200 transition-all duration-300"
-        onClick={() => setShowComprehensiveFunnel(true)}
+        onClick={() => setShowTraderFunnel(true)}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-8">
             <div className="space-y-4">
               <h1 className="text-5xl font-bold text-gray-900 leading-tight">
                 <span className="text-gray-800">One investment that's</span><br />
-                <span className="text-gray-800">never risky.</span>
+                <span className="text-gray-600">never risky.</span>
               </h1>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                You gamble with markets — but your future doesn't need to be a gamble. 
-                Hedge your family's security with the safest investment there is.
+                You gamble with markets — but your future doesn't need to be a gamble. Hedge your family's security with the safest investment there is.
               </p>
               <div className="flex items-center justify-center space-x-4 text-sm text-gray-500">
                 <div className="flex items-center">
-                  <Star className="h-4 w-4 text-gray-600 mr-1" />
-                  <span>Trusted by 12,000+ Traders</span>
+                  <Star className="h-4 w-4 text-gray-500 mr-1" />
+                  <span>Trusted by 15,000+ Traders</span>
                 </div>
                 <div className="flex items-center">
-                  <Award className="h-4 w-4 text-gray-600 mr-1" />
-                  <span>4.8/5 Rating</span>
+                  <Award className="h-4 w-4 text-gray-500 mr-1" />
+                  <span>4.7/5 Rating</span>
                 </div>
               </div>
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
-                onClick={() => setShowComprehensiveFunnel(true)}
+                onClick={() => setShowTraderFunnel(true)}
                 className="bg-gray-800 hover:bg-gray-900 text-white px-8 py-4 text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center"
-                style={{ backgroundColor: brand.primaryColor }}
               >
-                <DollarSign className="h-5 w-5 mr-2" />
-                Hedge My Future
+                <Zap className="h-5 w-5 mr-2" />
+                Hedge My Family's Future
                 <ArrowRight className="h-5 w-5 ml-2" />
               </Button>
               <Button 
@@ -106,32 +114,32 @@ export default function TraderLegacyLifePage() {
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-4xl font-bold text-center text-gray-900 mb-12">
-            Protection Plans for Day Traders & Crypto Investors
+            Protection Plans for Traders & Crypto Investors
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
               <CardContent className="pt-8">
                 <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Shield className="h-8 w-8 text-gray-800" />
+                  <Shield className="h-8 w-8 text-gray-600" />
                 </div>
                 <h3 className="text-xl font-bold mb-3">Whole Life Insurance</h3>
                 <p className="text-gray-600 mb-6">Lifetime protection with guaranteed cash value that grows regardless of market conditions.</p>
                 <ul className="space-y-2 text-left">
                   <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-gray-600" />
+                    <CheckCircle className="h-4 w-4 text-gray-500" />
                     <span className="text-sm">Guaranteed death benefit</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-gray-600" />
-                    <span className="text-sm">Cash value for emergencies</span>
+                    <CheckCircle className="h-4 w-4 text-gray-500" />
+                    <span className="text-sm">Cash value for opportunities</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-gray-600" />
+                    <CheckCircle className="h-4 w-4 text-gray-500" />
                     <span className="text-sm">Fixed premiums</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-gray-600" />
+                    <CheckCircle className="h-4 w-4 text-gray-500" />
                     <span className="text-sm">Living benefits included</span>
                   </li>
                 </ul>
@@ -140,26 +148,26 @@ export default function TraderLegacyLifePage() {
             
             <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
               <CardContent className="pt-8">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Clock className="h-8 w-8 text-blue-600" />
+                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Clock className="h-8 w-8 text-slate-600" />
                 </div>
                 <h3 className="text-xl font-bold mb-3">Term Insurance</h3>
-                <p className="text-gray-600 mb-6">Affordable coverage during your trading years with conversion options.</p>
+                <p className="text-gray-600 mb-6">Affordable coverage during your active trading years with conversion options.</p>
                 <ul className="space-y-2 text-left">
                   <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-gray-600" />
+                    <CheckCircle className="h-4 w-4 text-gray-500" />
                     <span className="text-sm">Lower initial premiums</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-gray-600" />
+                    <CheckCircle className="h-4 w-4 text-gray-500" />
                     <span className="text-sm">Flexible term lengths</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-gray-600" />
+                    <CheckCircle className="h-4 w-4 text-gray-500" />
                     <span className="text-sm">Convert to permanent later</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-gray-600" />
+                    <CheckCircle className="h-4 w-4 text-gray-500" />
                     <span className="text-sm">Living benefits available</span>
                   </li>
                 </ul>
@@ -168,26 +176,26 @@ export default function TraderLegacyLifePage() {
             
             <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
               <CardContent className="pt-8">
-                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <ChartLine className="h-8 w-8 text-slate-600" />
+                <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <ChartLine className="h-8 w-8 text-zinc-600" />
                 </div>
                 <h3 className="text-xl font-bold mb-3">Indexed Universal Life</h3>
                 <p className="text-gray-600 mb-6">Market-linked growth potential with downside protection for wealth building.</p>
                 <ul className="space-y-2 text-left">
                   <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-gray-600" />
+                    <CheckCircle className="h-4 w-4 text-gray-500" />
                     <span className="text-sm">Market-linked growth</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-gray-600" />
+                    <CheckCircle className="h-4 w-4 text-gray-500" />
                     <span className="text-sm">Downside protection</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-gray-600" />
+                    <CheckCircle className="h-4 w-4 text-gray-500" />
                     <span className="text-sm">Flexible premiums</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-gray-600" />
+                    <CheckCircle className="h-4 w-4 text-gray-500" />
                     <span className="text-sm">Advanced living benefits</span>
                   </li>
                 </ul>
@@ -198,7 +206,11 @@ export default function TraderLegacyLifePage() {
       </section>
 
       {/* IUL Education Section */}
-      <IULEducationSection brand={brand} />
+      <IULEducationSection brand={{
+        id: brandConfig.id,
+        name: brandConfig.name,
+        displayName: brandConfig.displayName
+      }} />
 
       {/* Comparison Section */}
       <section className="py-16 bg-gray-50">
@@ -213,29 +225,29 @@ export default function TraderLegacyLifePage() {
                 <tr className="bg-gray-800 text-white">
                   <th className="border border-gray-300 px-6 py-4 text-left">Feature</th>
                   <th className="border border-gray-300 px-6 py-4 text-center">Traditional Insurance</th>
-                  <th className="border border-gray-300 px-6 py-4 text-center bg-gray-900">Trader Legacy Life</th>
+                  <th className="border border-gray-300 px-6 py-4 text-center bg-gray-700">Trader Legacy Life</th>
                 </tr>
               </thead>
               <tbody>
                 <tr className="bg-white">
-                  <td className="border border-gray-300 px-6 py-4 font-semibold">Trader-Specific Benefits</td>
+                  <td className="border border-gray-300 px-6 py-4 font-semibold">Trading-Specific Planning</td>
                   <td className="border border-gray-300 px-6 py-4 text-center text-gray-600">None</td>
-                  <td className="border border-gray-300 px-6 py-4 text-center text-gray-800 font-semibold">✓ Customized</td>
+                  <td className="border border-gray-300 px-6 py-4 text-center text-gray-600 font-semibold">✓ Customized</td>
                 </tr>
                 <tr className="bg-gray-50">
                   <td className="border border-gray-300 px-6 py-4 font-semibold">Portfolio Protection</td>
                   <td className="border border-gray-300 px-6 py-4 text-center text-gray-600">Limited</td>
-                  <td className="border border-gray-300 px-6 py-4 text-center text-gray-800 font-semibold">✓ Risk Hedging</td>
+                  <td className="border border-gray-300 px-6 py-4 text-center text-gray-600 font-semibold">✓ Comprehensive</td>
                 </tr>
                 <tr className="bg-white">
-                  <td className="border border-gray-300 px-6 py-4 font-semibold">Market Volatility</td>
-                  <td className="border border-gray-300 px-6 py-4 text-center text-gray-600">Standard</td>
-                  <td className="border border-gray-300 px-6 py-4 text-center text-gray-800 font-semibold">✓ Downside Protection</td>
+                  <td className="border border-gray-300 px-6 py-4 font-semibold">Risk Management</td>
+                  <td className="border border-gray-300 px-6 py-4 text-center text-gray-600">Basic</td>
+                  <td className="border border-gray-300 px-6 py-4 text-center text-gray-600 font-semibold">✓ Advanced</td>
                 </tr>
                 <tr className="bg-gray-50">
-                  <td className="border border-gray-300 px-6 py-4 font-semibold">Trading Expert Support</td>
-                  <td className="border border-gray-300 px-6 py-4 text-center text-gray-600">Generic</td>
-                  <td className="border border-gray-300 px-6 py-4 text-center text-gray-800 font-semibold">✓ Trading Specialists</td>
+                  <td className="border border-gray-300 px-6 py-4 font-semibold">Market Volatility</td>
+                  <td className="border border-gray-300 px-6 py-4 text-center text-gray-600">Not Considered</td>
+                  <td className="border border-gray-300 px-6 py-4 text-center text-gray-600 font-semibold">✓ Strategically Addressed</td>
                 </tr>
               </tbody>
             </table>
@@ -247,17 +259,17 @@ export default function TraderLegacyLifePage() {
       <section className="py-16 bg-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold text-white mb-6">
-            Ready to Hedge Your Future?
+            Ready to Hedge Your Family's Future?
           </h2>
-          <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-            Join thousands of traders who've already secured their families with our trader-focused life insurance plans.
+          <p className="text-xl text-gray-200 mb-8 max-w-2xl mx-auto">
+            Join thousands of traders who've already secured their families and built wealth through our trader-focused life insurance plans.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
-              onClick={() => setShowComprehensiveFunnel(true)}
+              onClick={() => setShowTraderFunnel(true)}
               className="bg-white text-gray-800 hover:bg-gray-100 px-8 py-4 text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center"
             >
-              <DollarSign className="h-5 w-5 mr-2" />
+              <Zap className="h-5 w-5 mr-2" />
               Start My Application
               <ArrowRight className="h-5 w-5 ml-2" />
             </Button>
@@ -284,14 +296,14 @@ export default function TraderLegacyLifePage() {
                 <span className="text-xl font-bold">Trader Legacy Life</span>
               </div>
               <p className="text-gray-400">
-                One investment that's never risky since 2024.
+                Hedging family futures since 2024.
               </p>
             </div>
             <div>
               <h3 className="font-semibold mb-4">Contact</h3>
               <div className="space-y-2 text-gray-400">
-                <p>{brand.phone}</p>
-                <p>{brand.email}</p>
+                <p>(555) 123-4575</p>
+                <p>info@traderlegacylife.com</p>
               </div>
             </div>
             <div>
@@ -317,12 +329,12 @@ export default function TraderLegacyLifePage() {
         </div>
       </footer>
 
-      {/* Comprehensive Funnel Modal */}
-      {showComprehensiveFunnel && (
-        <ComprehensiveFunnel
-          brand={brand}
+      {/* Dynamic Funnel Modal */}
+      {showTraderFunnel && brandConfig && (
+        <DynamicFunnel
+          brandConfig={brandConfig}
           onComplete={handleFunnelComplete}
-          onClose={() => setShowComprehensiveFunnel(false)}
+          onClose={() => setShowTraderFunnel(false)}
         />
       )}
     </div>
