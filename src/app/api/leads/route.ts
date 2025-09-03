@@ -45,10 +45,16 @@ export async function POST(request: Request) {
     try {
       console.log('🔍 Looking up brand for:', leadData.brand_id);
       
+      // Try to find brand by converting slug to domain format
+      const brandSlug = leadData.brand_id;
+      const domainLookup = brandSlug.replace(/-/g, '') + '.com';
+      
+      console.log('🔍 Looking for domain:', domainLookup);
+      
       const { data: brandData, error: brandError } = await supabaseAdmin
         .from('brands')
         .select('id, brand_name, domain')
-        .or(`brand_name.ilike.%${leadData.brand_id}%,domain.ilike.%${leadData.brand_id}%`)
+        .or(`domain.eq.${domainLookup},brand_name.ilike.%${brandSlug}%`)
         .eq('is_active', true)
         .single();
       
@@ -102,7 +108,6 @@ export async function POST(request: Request) {
     const insertData: any = {
       session_id: leadData.session_id,
       brand_id: actualBrandId,
-      domain: leadData.domain,
       current_step: leadData.current_step,
       status: leadData.status
     };
@@ -117,49 +122,30 @@ export async function POST(request: Request) {
     if (leadData.branch_of_service && leadData.branch_of_service.trim()) insertData.branch_of_service = leadData.branch_of_service;
     if (leadData.marital_status && leadData.marital_status.trim()) insertData.marital_status = leadData.marital_status;
     if (leadData.coverage_amount) insertData.coverage_amount = leadData.coverage_amount;
-
-    // Store all the detailed data in form_data JSON field
-    insertData.form_data = {
-      // Birth date
-      date_of_birth: leadData.date_of_birth || '',
-      
-      // Medical information
-      height: leadData.height || '',
-      weight: leadData.weight || '',
-      tobacco_use: leadData.tobacco_use || '',
-      medical_conditions: leadData.medical_conditions || [],
-      hospital_care: leadData.hospital_care || '',
-      diabetes_medication: leadData.diabetes_medication || '',
-      
-      // Address and beneficiary
-      street_address: leadData.street_address || '',
-      city: leadData.city || '',
-      zip_code: leadData.zip_code || '',
-      beneficiary_name: leadData.beneficiary_name || '',
-      beneficiary_relationship: leadData.beneficiary_relationship || '',
-      drivers_license: leadData.drivers_license || '',
-      
-      // Financial information
-      ssn: leadData.ssn || '',
-      bank_name: leadData.bank_name || '',
-      routing_number: leadData.routing_number || '',
-      account_number: leadData.account_number || '',
-      policy_date: leadData.policy_date || '',
-      
-      // Consent and tracking
-      transactional_consent: leadData.transactional_consent || false,
-      marketing_consent: leadData.marketing_consent || false,
-      exit_intent: leadData.exit_intent || false,
-      completed_steps: Array.from({length: leadData.current_step}, (_, i) => i + 1),
-      
-      // UTM tracking
-      utm_source: leadData.utm_source || '',
-      utm_campaign: leadData.utm_campaign || '',
-      
-      // User tracking
-      user_agent: leadData.user_agent || '',
-      referrer: leadData.referrer || ''
-    };
+    if (leadData.exit_intent !== undefined) insertData.exit_intent = leadData.exit_intent;
+    if (leadData.user_agent) insertData.user_agent = leadData.user_agent;
+    if (leadData.referrer) insertData.referrer = leadData.referrer;
+    if (leadData.utm_source) insertData.utm_source = leadData.utm_source;
+    if (leadData.utm_campaign) insertData.utm_campaign = leadData.utm_campaign;
+    
+    // Add other available fields directly
+    if (leadData.date_of_birth) insertData.date_of_birth = leadData.date_of_birth;
+    if (leadData.tobacco_use) insertData.tobacco_use = leadData.tobacco_use;
+    if (leadData.medical_conditions) insertData.medical_conditions = leadData.medical_conditions;
+    if (leadData.height) insertData.height = leadData.height;
+    if (leadData.weight) insertData.weight = leadData.weight;
+    if (leadData.hospital_care) insertData.hospital_care = leadData.hospital_care;
+    if (leadData.diabetes_medication) insertData.diabetes_medication = leadData.diabetes_medication;
+    if (leadData.street_address) insertData.street_address = leadData.street_address;
+    if (leadData.city) insertData.city = leadData.city;
+    if (leadData.zip_code) insertData.zip_code = leadData.zip_code;
+    if (leadData.ssn) insertData.ssn = leadData.ssn;
+    if (leadData.bank_name) insertData.bank_name = leadData.bank_name;
+    if (leadData.routing_number) insertData.routing_number = leadData.routing_number;
+    if (leadData.account_number) insertData.account_number = leadData.account_number;
+    if (leadData.policy_date) insertData.policy_date = leadData.policy_date;
+    if (leadData.transactional_consent !== undefined) insertData.transactional_consent = leadData.transactional_consent;
+    if (leadData.marketing_consent !== undefined) insertData.marketing_consent = leadData.marketing_consent;
 
     console.log('📤 Prepared insert data:', {
       sessionId: leadData.session_id,
