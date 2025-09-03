@@ -207,86 +207,65 @@ export default function DynamicFunnel({ brandConfig, onComplete, onClose }: Dyna
   };
 
   return (
-    <>
-      <motion.div
-        className="modal-overlay active"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      {/* Backdrop */}
+      <div 
+        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
         onClick={onClose}
-      >
-        <motion.div
-          className="modal-content"
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 50, opacity: 0 }}
-          onClick={(e) => e.stopPropagation()}
-        >
+      />
+      
+      {/* Modal Content */}
+      <div className="flex min-h-full items-center justify-center p-4">
+        <div className="relative w-full max-w-4xl bg-white rounded-lg shadow-xl">
+          {/* Close Button */}
           <button
-            className="modal-close"
             onClick={onClose}
-            style={{
-              position: 'absolute',
-              top: '1rem',
-              right: '1rem',
-              background: 'none',
-              border: 'none',
-              fontSize: '1.5rem',
-              cursor: 'pointer',
-              color: 'var(--text-light)'
-            }}
+            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10"
           >
-            ×
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
-
-          {/* Don't show progress bar during loading screen */}
-          {currentStep !== 13 && (
-            <ProgressBar currentStep={currentStep} totalSteps={TOTAL_STEPS} />
-          )}
-
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentStep}
-              initial={{ x: 20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: -20, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              {renderStep()}
-            </motion.div>
-          </AnimatePresence>
-
-          {/* Don't show action buttons during loading screen or for IULQuoteModal */}
-          {currentStep !== 13 && currentStep !== 15 && (
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              marginTop: '2rem',
-              gap: '1rem'
-            }}>
-              {currentStep > 1 && (
-                <Button
-                  variant="secondary"
-                  onClick={handleBack}
-                >
-                  Back
-                </Button>
-              )}
-              
-              <div style={{ flex: 1 }}></div>
-              
-              {currentStep < TOTAL_STEPS && (
-                <Button
-                  onClick={handleNext}
-                  disabled={!canGoNext()}
-                >
-                  {currentStep === TOTAL_STEPS - 1 ? 'Submit' : 'Continue'}
-                </Button>
-              )}
+          
+          {/* Funnel Content */}
+          <div className="p-6">
+            {/* Progress Bar */}
+            <div className="mb-6">
+              <ProgressBar currentStep={currentStep} totalSteps={TOTAL_STEPS} />
             </div>
-          )}
-        </motion.div>
-      </motion.div>
-    </>
+            
+            {/* Step Content */}
+            <div className="min-h-[400px]">
+              {renderStep()}
+            </div>
+            
+            {/* Navigation Buttons */}
+            {currentStep !== 13 && currentStep !== 15 && (
+              <div className="flex justify-between items-center mt-6 gap-4">
+                {currentStep > 1 && (
+                  <Button
+                    variant="secondary"
+                    onClick={handleBack}
+                  >
+                    Back
+                  </Button>
+                )}
+                
+                <div className="flex-1"></div>
+                
+                {currentStep < TOTAL_STEPS && (
+                  <Button
+                    onClick={handleNext}
+                    disabled={!canGoNext()}
+                  >
+                    {currentStep === TOTAL_STEPS - 1 ? 'Submit' : 'Continue'}
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
