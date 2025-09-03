@@ -40,42 +40,43 @@ export async function POST(request: Request) {
 
     // First, get the actual brand UUID from the brands table
     let actualBrandId = leadData.brand_id;
-    if (leadData.brand_id === 'veteran-legacy-life') {
-      console.log('🔍 Looking up brand for domain:', leadData.domain);
+    
+    // Look up the brand by name/slug to get the actual UUID
+    try {
+      console.log('🔍 Looking up brand for:', leadData.brand_id);
       
-      try {
-        const { data: brandData, error: brandError } = await supabaseAdmin
+      const { data: brandData, error: brandError } = await supabaseAdmin
+        .from('brands')
+        .select('id, brand_name, domain')
+        .or(`brand_name.ilike.%${leadData.brand_id}%,domain.ilike.%${leadData.brand_id}%`)
+        .eq('is_active', true)
+        .single();
+      
+      if (brandError) {
+        console.error('❌ Error fetching brand:', brandError);
+        // Try to find any active brand as fallback
+        const { data: fallbackBrand, error: fallbackError } = await supabaseAdmin
           .from('brands')
           .select('id, brand_name, domain')
-          .eq('domain', leadData.domain)
+          .eq('is_active', true)
+          .limit(1)
           .single();
         
-        if (brandError) {
-          console.error('❌ Error fetching brand:', brandError);
-          // Try to find any active brand as fallback
-          const { data: fallbackBrand, error: fallbackError } = await supabaseAdmin
-            .from('brands')
-            .select('id, brand_name, domain')
-            .eq('is_active', true)
-            .limit(1)
-            .single();
-          
-          if (fallbackBrand) {
-            actualBrandId = fallbackBrand.id;
-            console.log('✅ Using fallback brand:', fallbackBrand.brand_name, fallbackBrand.id);
-          } else {
-            console.error('❌ No fallback brand found:', fallbackError);
-            // Use a dummy UUID for now
-            actualBrandId = '00000000-0000-0000-0000-000000000000';
-          }
-        } else if (brandData) {
-          actualBrandId = brandData.id;
-          console.log('✅ Found brand ID:', actualBrandId, 'for domain:', brandData.domain);
+        if (fallbackBrand) {
+          actualBrandId = fallbackBrand.id;
+          console.log('✅ Using fallback brand:', fallbackBrand.brand_name, fallbackBrand.id);
+        } else {
+          console.error('❌ No fallback brand found:', fallbackError);
+          // Use a dummy UUID for now
+          actualBrandId = '00000000-0000-0000-0000-000000000000';
         }
-      } catch (brandLookupError) {
-        console.error('❌ Brand lookup error:', brandLookupError);
-        actualBrandId = '00000000-0000-0000-0000-000000000000';
+      } else if (brandData) {
+        actualBrandId = brandData.id;
+        console.log('✅ Found brand ID:', actualBrandId, 'for brand:', brandData.brand_name);
       }
+    } catch (brandLookupError) {
+      console.error('❌ Brand lookup error:', brandLookupError);
+      actualBrandId = '00000000-0000-0000-0000-000000000000';
     }
 
     // Check if lead already exists by session_id

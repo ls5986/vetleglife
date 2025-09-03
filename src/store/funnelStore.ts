@@ -193,5 +193,71 @@ export const useFunnelStore = create<FunnelStore>((set, get) => ({
       autoAdvanceEnabled: true,
       isModalOpen: false
     });
+  },
+  
+  submitStepData: async (step: number, data: FormData) => {
+    try {
+      // Get the current brand from the URL
+      const pathSegments = window.location.pathname.split('/');
+      const brandId = pathSegments[pathSegments.length - 1] || 'veteran-legacy-life';
+      
+      const response = await fetch('/api/leads', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          leadData: {
+            session_id: data.sessionId,
+            brand_id: brandId,
+            domain: window.location.hostname,
+            current_step: step,
+            status: step === 18 ? 'completed' : 'partial',
+            first_name: data.contactInfo?.firstName || '',
+            last_name: data.contactInfo?.lastName || '',
+            email: data.contactInfo?.email || '',
+            phone: data.contactInfo?.phone || '',
+            state: data.preQualification?.state || '',
+            military_status: data.preQualification?.militaryStatus || '',
+            branch_of_service: data.preQualification?.branchOfService || '',
+            marital_status: data.preQualification?.maritalStatus || '',
+            coverage_amount: data.preQualification?.coverageAmount || '',
+            date_of_birth: data.contactInfo?.dateOfBirth || '',
+            height: data.medicalAnswers?.height || '',
+            weight: data.medicalAnswers?.weight || '',
+            tobacco_use: data.medicalAnswers?.tobaccoUse || '',
+            medical_conditions: data.medicalAnswers?.medicalConditions || [],
+            hospital_care: data.medicalAnswers?.hospitalCare || '',
+            diabetes_medication: data.medicalAnswers?.diabetesMedication || '',
+            street_address: data.applicationData?.streetAddress || '',
+            city: data.applicationData?.city || '',
+            zip_code: data.applicationData?.zipCode || '',
+            beneficiary_name: data.applicationData?.beneficiaryName || '',
+            beneficiary_relationship: data.applicationData?.beneficiaryRelationship || '',
+            drivers_license: data.applicationData?.driversLicense || '',
+            ssn: data.applicationData?.ssn || '',
+            bank_name: data.applicationData?.bankName || '',
+            routing_number: data.applicationData?.routingNumber || '',
+            account_number: data.applicationData?.accountNumber || '',
+            policy_date: data.quoteData?.policyDate || '',
+            transactional_consent: data.contactInfo?.transactionalConsent || false,
+            marketing_consent: data.contactInfo?.marketingConsent || false,
+            exit_intent: data.exitIntent || false,
+            utm_source: data.utmSource || '',
+            utm_campaign: data.utmCampaign || '',
+            user_agent: navigator.userAgent,
+            referrer: document.referrer
+          }
+        }),
+      });
+
+      if (!response.ok) {
+        console.error('Failed to submit step data:', response);
+      } else {
+        console.log(`✅ Step ${step} data submitted successfully!`);
+      }
+    } catch (error) {
+      console.error('Failed to submit step data:', error);
+    }
   }
 }));
