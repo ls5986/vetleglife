@@ -73,8 +73,7 @@ export async function POST(request: Request) {
           console.log('✅ Using fallback brand:', fallbackBrand.brand_name, fallbackBrand.id);
         } else {
           console.error('❌ No fallback brand found:', fallbackError);
-          // Use a dummy UUID for now
-          actualBrandId = '00000000-0000-0000-0000-000000000000';
+          throw new Error('No active brands found in database');
         }
       } else if (brandData) {
         actualBrandId = brandData.id;
@@ -82,7 +81,7 @@ export async function POST(request: Request) {
       }
     } catch (brandLookupError) {
       console.error('❌ Brand lookup error:', brandLookupError);
-      actualBrandId = '00000000-0000-0000-0000-000000000000';
+      throw new Error(`Failed to find brand: ${brandLookupError instanceof Error ? brandLookupError.message : 'Unknown error'}`);
     }
 
     // Check if lead already exists by session_id
@@ -127,25 +126,49 @@ export async function POST(request: Request) {
     if (leadData.referrer) insertData.referrer = leadData.referrer;
     if (leadData.utm_source) insertData.utm_source = leadData.utm_source;
     if (leadData.utm_campaign) insertData.utm_campaign = leadData.utm_campaign;
-    
-    // Add other available fields directly
-    if (leadData.date_of_birth) insertData.date_of_birth = leadData.date_of_birth;
-    if (leadData.tobacco_use) insertData.tobacco_use = leadData.tobacco_use;
-    if (leadData.medical_conditions) insertData.medical_conditions = leadData.medical_conditions;
-    if (leadData.height) insertData.height = leadData.height;
-    if (leadData.weight) insertData.weight = leadData.weight;
-    if (leadData.hospital_care) insertData.hospital_care = leadData.hospital_care;
-    if (leadData.diabetes_medication) insertData.diabetes_medication = leadData.diabetes_medication;
-    if (leadData.street_address) insertData.street_address = leadData.street_address;
-    if (leadData.city) insertData.city = leadData.city;
-    if (leadData.zip_code) insertData.zip_code = leadData.zip_code;
-    if (leadData.ssn) insertData.ssn = leadData.ssn;
-    if (leadData.bank_name) insertData.bank_name = leadData.bank_name;
-    if (leadData.routing_number) insertData.routing_number = leadData.routing_number;
-    if (leadData.account_number) insertData.account_number = leadData.account_number;
-    if (leadData.policy_date) insertData.policy_date = leadData.policy_date;
-    if (leadData.transactional_consent !== undefined) insertData.transactional_consent = leadData.transactional_consent;
-    if (leadData.marketing_consent !== undefined) insertData.marketing_consent = leadData.marketing_consent;
+
+    // Store all the detailed data in form_data JSON field
+    insertData.form_data = {
+      // Birth date
+      date_of_birth: leadData.date_of_birth || '',
+      
+      // Medical information
+      height: leadData.height || '',
+      weight: leadData.weight || '',
+      tobacco_use: leadData.tobacco_use || '',
+      medical_conditions: leadData.medical_conditions || [],
+      hospital_care: leadData.hospital_care || '',
+      diabetes_medication: leadData.diabetes_medication || '',
+      
+      // Address and beneficiary
+      street_address: leadData.street_address || '',
+      city: leadData.city || '',
+      zip_code: leadData.zip_code || '',
+      beneficiary_name: leadData.beneficiary_name || '',
+      beneficiary_relationship: leadData.beneficiary_relationship || '',
+      drivers_license: leadData.drivers_license || '',
+      
+      // Financial information
+      ssn: leadData.ssn || '',
+      bank_name: leadData.bank_name || '',
+      routing_number: leadData.routing_number || '',
+      account_number: leadData.account_number || '',
+      policy_date: leadData.policy_date || '',
+      
+      // Consent and tracking
+      transactional_consent: leadData.transactional_consent || false,
+      marketing_consent: leadData.marketing_consent || false,
+      exit_intent: leadData.exit_intent || false,
+      completed_steps: Array.from({length: leadData.current_step}, (_, i) => i + 1),
+      
+      // UTM tracking
+      utm_source: leadData.utm_source || '',
+      utm_campaign: leadData.utm_campaign || '',
+      
+      // User tracking
+      user_agent: leadData.user_agent || '',
+      referrer: leadData.referrer || ''
+    };
 
     console.log('📤 Prepared insert data:', {
       sessionId: leadData.session_id,
