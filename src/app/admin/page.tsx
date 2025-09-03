@@ -108,7 +108,8 @@ export default function AdminDashboard() {
       console.log('✅ Dashboard data loaded:', {
         leads: data.stats.todayLeads,
         applications: data.stats.todayApplications,
-        brands: data.brands?.length || 0
+        brands: data.brands?.length || 0,
+        brandsData: data.brands
       });
       
       setLoading(false);
@@ -204,7 +205,7 @@ export default function AdminDashboard() {
         )}
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Leads</CardTitle>
@@ -240,6 +241,19 @@ export default function AdminDashboard() {
               <div className="text-2xl font-bold">{stats.activeLeads}</div>
               <p className="text-xs text-muted-foreground">
                 {stats.abandonedLeads} abandoned
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Brands</CardTitle>
+              <Target className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{brands.length}</div>
+              <p className="text-xs text-muted-foreground">
+                Total active brands
               </p>
             </CardContent>
           </Card>

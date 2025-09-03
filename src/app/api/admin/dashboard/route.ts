@@ -46,6 +46,12 @@ export async function GET(request: Request) {
     }
 
     console.log('✅ Brands loaded:', brands?.length || 0);
+    console.log('🔍 Brands query details:', {
+      table: 'brands',
+      filter: 'is_active = true',
+      resultCount: brands?.length || 0,
+      brands: brands?.map(b => ({ id: b.id, name: b.brand_name, active: b.is_active }))
+    });
 
     // Build queries with brand filter
     let leadsQuery = supabaseAdmin
