@@ -80,7 +80,7 @@ export default function VeteranLifeInsuranceFunnel({ onComplete, onClose }: { on
       case 17:
         return <ApplicationStep2 />
       case 18:
-        return <FinalSuccessModal />
+        return <FinalSuccessModal brandId="veteran-legacy-life" />
       default:
         return <div>
           <h2>Step {currentStep}</h2>

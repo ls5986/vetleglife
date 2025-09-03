@@ -98,6 +98,27 @@ export default function DynamicFunnel({ brandConfig, onComplete, onClose }: Dyna
       );
     }
 
+    // Special handling for IULQuoteModal
+    if (currentStepConfig.component === 'IULQuoteModal') {
+      return (
+        <IULQuoteModal />
+      );
+    }
+
+    // Special handling for FinalSuccessModal
+    if (currentStepConfig.component === 'FinalSuccessModal') {
+      return (
+        <FinalSuccessModal brandId={brandConfig.id} />
+      );
+    }
+
+    // Special handling for PreQualifiedSuccess
+    if (currentStepConfig.component === 'PreQualifiedSuccess') {
+      return (
+        <PreQualifiedSuccess />
+      );
+    }
+
     return <Component />;
   };
 
@@ -184,8 +205,6 @@ export default function DynamicFunnel({ brandConfig, onComplete, onClose }: Dyna
            !!formData.applicationData?.accountNumber &&
            !!formData.quoteData?.policyDate;
   };
-
-  if (!isModalOpen) return null;
 
   return (
     <>

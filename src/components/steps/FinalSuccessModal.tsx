@@ -1,7 +1,11 @@
 import React, { useEffect } from 'react';
 import { useFunnelStore } from '../../store/funnelStore';
 
-export const FinalSuccessModal: React.FC = () => {
+interface FinalSuccessModalProps {
+  brandId: string;
+}
+
+export const FinalSuccessModal: React.FC<FinalSuccessModalProps> = ({ brandId }) => {
   const { formData, submitPartial } = useFunnelStore();
 
   useEffect(() => {
@@ -11,7 +15,7 @@ export const FinalSuccessModal: React.FC = () => {
 
   const submitFinalData = async () => {
     try {
-      console.log('🎉 FinalSuccessModal - Submitting final application data');
+      console.log('🎉 FinalSuccessModal - Submitting final application data for brand:', brandId);
       
       const response = await fetch('/api/leads', {
         method: 'POST',
@@ -21,7 +25,7 @@ export const FinalSuccessModal: React.FC = () => {
         body: JSON.stringify({
           leadData: {
             session_id: formData.sessionId,
-            brand_id: 'veteran-legacy-life',
+            brand_id: brandId,
             domain: window.location.hostname,
             current_step: 18,
             status: 'completed',
