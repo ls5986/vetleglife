@@ -57,15 +57,14 @@ export const Birthday: React.FC = () => {
     return true;
   };
 
-  // Auto-continue when valid date is selected and auto-advance is enabled
+  // Do not advance here; DynamicFunnel will detect a valid DOB and show the next screen
   useEffect(() => {
-    if (formData.contactInfo.month && formData.contactInfo.day && formData.contactInfo.year && autoAdvanceEnabled) {
-      if (validateAge()) {
-        // Immediate auto-advance - no delay
-        goToNextStep();
-      }
+    if (formData.contactInfo.month && formData.contactInfo.day && formData.contactInfo.year) {
+      validateAge();
+    } else {
+      setErrors('');
     }
-  }, [formData.contactInfo.month, formData.contactInfo.day, formData.contactInfo.year, autoAdvanceEnabled, goToNextStep]);
+  }, [formData.contactInfo.month, formData.contactInfo.day, formData.contactInfo.year]);
 
   return (
     <div>

@@ -139,6 +139,24 @@ export default function LeadDetailPage() {
     }
   };
 
+  const getLatestStatuses = (history: any[]) => {
+    if (!Array.isArray(history) || history.length === 0) {
+      return { client: '—', rep: '—' };
+    }
+    const sorted = [...history].sort((a, b) => {
+      const atA = a?.at ? new Date(a.at).getTime() : 0;
+      const atB = b?.at ? new Date(b.at).getTime() : 0;
+      return atA - atB;
+    });
+    const reversed = sorted.reverse();
+    const latestClient = reversed.find((e) => e?.client_status && e.client_status !== 'unknown');
+    const latestRep = reversed.find((e) => e?.rep_status && e.rep_status !== 'unknown');
+    return {
+      client: latestClient?.client_status || '—',
+      rep: latestRep?.rep_status || '—'
+    };
+  };
+
   const renderFormData = (formData: any) => {
     if (!formData) return null;
 
@@ -267,6 +285,11 @@ export default function LeadDetailPage() {
       </div>
     );
   }
+
+  const communicationHistory: any[] = Array.isArray((lead as any).communication_history)
+    ? (lead as any).communication_history
+    : [];
+  const latestStatuses = getLatestStatuses(communicationHistory);
 
   return (
     <div className="p-6 space-y-6">
@@ -483,6 +506,59 @@ export default function LeadDetailPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Communication History */}
+      {Array.isArray((lead as any).communication_history) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Communication History</CardTitle>
+            <div className="mt-2 flex items-center gap-2">
+              <Badge className="bg-blue-100 text-blue-800">Client: {latestStatuses.client}</Badge>
+              <Badge className="bg-purple-100 text-purple-800">Rep: {latestStatuses.rep}</Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {(lead as any).communication_history.length === 0 ? (
+              <p className="text-sm text-gray-500">No communications recorded yet.</p>
+            ) : (
+              <div className="space-y-3">
+                {(lead as any).communication_history.map((evt: any, idx: number) => (
+                  <div key={idx} className="border rounded-md p-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline">{evt.type || 'email'}</Badge>
+                        <span className="text-xs text-gray-500">{evt.at ? new Date(evt.at).toLocaleString() : ''}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge className="bg-blue-100 text-blue-800">Client: {evt.client_status}</Badge>
+                        <Badge className="bg-purple-100 text-purple-800">Rep: {evt.rep_status}</Badge>
+                      </div>
+                    </div>
+                    {(evt.client_subject || evt.rep_subject) && (
+                      <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <div className="text-xs font-semibold text-gray-600">Client Subject</div>
+                          <div className="text-sm">{evt.client_subject || '—'}</div>
+                          {evt.client_preview && (
+                            <div className="text-xs text-gray-500 mt-1">{evt.client_preview}</div>
+                          )}
+                        </div>
+                        <div>
+                          <div className="text-xs font-semibold text-gray-600">Rep Subject</div>
+                          <div className="text-sm">{evt.rep_subject || '—'}</div>
+                          {evt.rep_preview && (
+                            <div className="text-xs text-gray-500 mt-1">{evt.rep_preview}</div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

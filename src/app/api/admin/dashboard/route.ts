@@ -94,7 +94,21 @@ export async function GET(request: Request) {
     }
 
     const leads: any[] = leadsResult.data || [];
-    const applications: any[] = Array.isArray(appsResult?.data) ? appsResult.data : [];
+    let applications: any[] = Array.isArray(appsResult?.data) ? appsResult.data : [];
+
+    // Fallback: derive applications from completed/converted leads if applications table is empty/missing
+    if (!applications || applications.length === 0) {
+      const derived = (leads || []).filter((l: any) => {
+        const status = String(l?.status || '').toLowerCase();
+        const step = Number(l?.current_step || 0);
+        return status === 'converted' || step >= 18;
+      }).map((l: any) => ({
+        brand_id: l.brand_id,
+        coverage_amount: l.coverage_amount || 0,
+        created_at: l.created_at,
+      }));
+      applications = derived;
+    }
 
     console.log('📊 Data loaded:', {
       leads: leads.length,

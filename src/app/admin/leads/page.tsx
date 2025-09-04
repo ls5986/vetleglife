@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatDate, formatCurrency } from '@/lib/utils';
-import { Search, Filter, Eye, Phone, Mail, Download, RefreshCw } from 'lucide-react';
+import { Search, Filter, Eye, Phone, Mail, Download, RefreshCw, UserPlus, CheckCircle, Clock, Target, DollarSign } from 'lucide-react';
 import Link from 'next/link';
 
 interface Lead {
@@ -45,6 +45,14 @@ export default function LeadsPage() {
   const [totalLeads, setTotalLeads] = useState(0);
   const leadsPerPage = 20;
   const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState({
+    todayLeads: 0,
+    todayApplications: 0,
+    conversionRate: 0,
+    activeLeads: 0,
+    abandonedLeads: 0,
+    totalRevenue: 0
+  });
 
   useEffect(() => {
     loadData();
@@ -57,18 +65,30 @@ export default function LeadsPage() {
 
       console.log('🚀 Loading leads data...');
 
-      const response = await fetch(`/api/admin/leads-data?searchTerm=${searchTerm}&statusFilter=${statusFilter}&brandFilter=${brandFilter}&page=${currentPage}&limit=${leadsPerPage}`);
-      const result = await response.json();
+      const [leadsRes, dashRes] = await Promise.all([
+        fetch(`/api/admin/leads-data?searchTerm=${searchTerm}&statusFilter=${statusFilter}&brandFilter=${brandFilter}&page=${currentPage}&limit=${leadsPerPage}`),
+        fetch(`/api/admin/dashboard?timeRange=today&selectedBrand=all`)
+      ]);
 
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to load leads data');
+      const leadsJson = await leadsRes.json();
+      const dashJson = await dashRes.json();
+
+      if (!leadsJson.success) {
+        throw new Error(leadsJson.error || 'Failed to load leads data');
+      }
+      if (!dashJson.success) {
+        throw new Error(dashJson.error || 'Failed to load dashboard stats');
       }
 
-      const { data } = result;
-      
+      const { data } = leadsJson;
       setBrands(data.brands || []);
       setLeads(data.leads || []);
       setTotalLeads(data.pagination.totalLeads || 0);
+
+      const dashData = dashJson.data;
+      if (dashData?.stats) {
+        setStats(dashData.stats);
+      }
 
       console.log('✅ Leads data loaded successfully:', {
         brands: data.brands?.length || 0,
@@ -199,34 +219,60 @@ export default function LeadsPage() {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Stats - replicated from Dashboard for consistency */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-blue-600">{totalLeads}</div>
-            <div className="text-sm text-gray-600">Total Leads</div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Leads</CardTitle>
+            <UserPlus className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.todayLeads}</div>
+            <p className="text-xs text-muted-foreground">Today</p>
           </CardContent>
         </Card>
+
         <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-green-600">
-              {leads.filter(l => l.status === 'active').length}
-            </div>
-            <div className="text-sm text-gray-600">Active Leads</div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Applications</CardTitle>
+            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.todayApplications}</div>
+            <p className="text-xs text-muted-foreground">{stats.conversionRate.toFixed(1)}% conversion rate</p>
           </CardContent>
         </Card>
+
         <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-purple-600">
-              {leads.filter(l => l.status === 'converted').length}
-            </div>
-            <div className="text-sm text-gray-600">Converted</div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Leads</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.activeLeads}</div>
+            <p className="text-xs text-muted-foreground">{stats.abandonedLeads} abandoned</p>
           </CardContent>
         </Card>
+
         <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-orange-600">{brands.length}</div>
-            <div className="text-sm text-gray-600">Active Brands</div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Brands</CardTitle>
+            <Target className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{brands.length}</div>
+            <p className="text-xs text-muted-foreground">Total active brands</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(stats.totalRevenue)}</div>
+            <p className="text-xs text-muted-foreground">Potential coverage value</p>
           </CardContent>
         </Card>
       </div>

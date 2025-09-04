@@ -230,7 +230,7 @@ export const useFunnelStore = create<FunnelStore>((set, get) => ({
   resetFunnel: () => {
     set({
       currentStep: 1,
-      formData: initialFormData,
+      formData: { ...initialFormData, sessionId: generateSessionId() },
       autoAdvanceEnabled: true,
       isModalOpen: false
     });
@@ -255,7 +255,7 @@ export const useFunnelStore = create<FunnelStore>((set, get) => ({
           brand_id: brandId,
           domain: window.location.hostname,
           current_step: step,
-          status: step === 18 ? 'completed' : 'partial',
+          status: step === 18 ? 'Completed' : 'Partial',
           first_name: data.contactInfo?.firstName || '',
           last_name: data.contactInfo?.lastName || '',
           email: data.contactInfo?.email || '',
@@ -338,7 +338,7 @@ export const useFunnelStore = create<FunnelStore>((set, get) => ({
           brand_id: brandId,
           domain: window.location.hostname,
           current_step: 1,
-          status: 'started',
+          status: 'Started',
           user_agent: navigator.userAgent,
           referrer: document.referrer,
           utm_source: new URLSearchParams(window.location.search).get('utm_source') || '',

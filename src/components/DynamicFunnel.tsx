@@ -1,3 +1,4 @@
+"use client";
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFunnelStore } from '../store/funnelStore';
@@ -40,7 +41,8 @@ import { ApplicationStep1 } from './steps/ApplicationStep1';
 import { ApplicationStep2 } from './steps/ApplicationStep2';
 import { FinalSuccessModal } from './steps/FinalSuccessModal';
 import { validateContactInfo } from '../utils/validation';
-import { BrandConfig } from '../config/brands';
+import { BrandConfig, getBrandById } from '../config/brands';
+import AgentHandoffStep from './steps/AgentHandoffStep';
 
 interface DynamicFunnelProps {
   brandConfig: BrandConfig;
@@ -86,7 +88,33 @@ export default function DynamicFunnel({ brandConfig, onComplete, onClose }: Dyna
     createInitialSession
   } = useFunnelStore();
 
+  const [showExitConfirm, setShowExitConfirm] = React.useState(false);
+  const [showHandoff, setShowHandoff] = React.useState(false);
+  const legacyBrand = getBrandById(brandConfig.id);
+  const supportPhone = legacyBrand?.phone || '1-800-555-1234';
+  const supportDomain = legacyBrand?.domain || 'legacylifeadvocates.com';
+
   const TOTAL_STEPS = brandConfig.funnelSteps.length;
+
+  // Map real step numbers to chunked display steps for the top bar:
+  // 1-7, then 1-8 (steps 8-15), then 1-2 (steps 16-17). Step 18 treated as 2/2.
+  const getDisplayProgress = React.useCallback((): { displayStep: number; displayTotal: number } => {
+    // Treat the loading screen (StreamingLoadingSpinner) as not a counted step
+    const stepComponent = brandConfig.funnelSteps.find(s => s.stepNumber === currentStep)?.component;
+    const effectiveStep = stepComponent === 'StreamingLoadingSpinner' ? currentStep - 1 : currentStep;
+    // Chunk 1: steps 1-7
+    if (effectiveStep <= 7) {
+      return { displayStep: Math.max(1, effectiveStep), displayTotal: 7 };
+    }
+    // Chunk 2: medical questions (steps 8-15) should display 1..8 starting at step 8
+    if (effectiveStep >= 8 && effectiveStep <= 15) {
+      return { displayStep: effectiveStep - 7, displayTotal: 8 };
+    }
+    // Chunk 3: last 2 steps (17-18) display 1..2
+    const capped = Math.min(effectiveStep, 18);
+    return { displayStep: Math.max(1, capped - 16), displayTotal: 2 };
+  }, [currentStep, brandConfig.funnelSteps]);
+  const VIRTUAL_TOTAL_STEPS = 18;
 
   // Create initial session when funnel opens
   React.useEffect(() => {
@@ -96,7 +124,27 @@ export default function DynamicFunnel({ brandConfig, onComplete, onClose }: Dyna
     }
   }, [isModalOpen, formData.sessionId, createInitialSession, brandConfig.id]);
 
+  // Show handoff on step 7 only when DOB is valid; do not auto-advance
+  React.useEffect(() => {
+    if (currentStep === 7) {
+      const dob = formData?.contactInfo?.dateOfBirth || '';
+      const validDob = !!dob && dob.includes('-') && dob.split('-').filter(Boolean).length === 3;
+      if (validDob) {
+        setShowHandoff(true);
+      } else {
+        setShowHandoff(false);
+      }
+      setAutoAdvanceEnabled(false);
+      return;
+    }
+    setAutoAdvanceEnabled(true);
+  }, [currentStep, formData?.contactInfo?.dateOfBirth, setAutoAdvanceEnabled]);
+
   const renderStep = () => {
+    // Handoff renders on step 7 (overlay-style screen content), not consuming step 8
+    if (currentStep === 7 && showHandoff) {
+      return <AgentHandoffStep onContinue={() => { setShowHandoff(false); goToNextStep(); }} supportPhone={supportPhone} />;
+    }
     const currentStepConfig = brandConfig.funnelSteps.find(step => step.stepNumber === currentStep);
     if (!currentStepConfig) {
       return <div>Step not found</div>;
@@ -201,14 +249,30 @@ export default function DynamicFunnel({ brandConfig, onComplete, onClose }: Dyna
   };
 
   const handleNext = () => {
+    const currentStepConfig = brandConfig.funnelSteps.find(step => step.stepNumber === currentStep);
+    if (!currentStepConfig) return;
+    if (currentStep === 7) {
+      // Between step 7 and 8 show handoff as its own screen
+      if (canGoNext()) {
+        setShowHandoff(true);
+        setAutoAdvanceEnabled(false);
+        goToNextStep(); // advance to step 8 to render the handoff as its own screen
+      }
+      return;
+    }
     if (canGoNext()) {
-      // Re-enable auto-advance when user clicks Continue
       setAutoAdvanceEnabled(true);
       goToNextStep();
     }
   };
 
   const handleBack = () => {
+    // If we're on the handoff screen (rendered at step 7), Back should return to Birthday (same step)
+    if (currentStep === 7 && showHandoff) {
+      setShowHandoff(false);
+      setAutoAdvanceEnabled(false);
+      return;
+    }
     goToPreviousStep();
   };
 
@@ -229,12 +293,21 @@ export default function DynamicFunnel({ brandConfig, onComplete, onClose }: Dyna
            !!formData.quoteData?.policyDate;
   };
 
+  if (!isModalOpen) return null;
+
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
       <div 
         className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
-        onClick={onClose}
+        onClick={() => {
+          if (currentStep >= TOTAL_STEPS) {
+            closeModal();
+            onClose();
+          } else {
+            setShowExitConfirm(true);
+          }
+        }}
       />
       
       {/* Modal Content */}
@@ -242,7 +315,14 @@ export default function DynamicFunnel({ brandConfig, onComplete, onClose }: Dyna
         <div className="relative w-full max-w-4xl bg-white rounded-lg shadow-xl">
           {/* Close Button */}
           <button
-            onClick={onClose}
+            onClick={() => {
+              if (currentStep >= TOTAL_STEPS) {
+                closeModal();
+                onClose();
+              } else {
+                setShowExitConfirm(true);
+              }
+            }}
             className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -252,9 +332,34 @@ export default function DynamicFunnel({ brandConfig, onComplete, onClose }: Dyna
           
           {/* Funnel Content */}
           <div className="p-6">
+            {/* Exit confirmation overlay */}
+            {showExitConfirm && currentStep < TOTAL_STEPS && (
+              <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/80">
+                <div className="bg-white rounded-lg shadow-lg border w-full max-w-md p-5">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Are you sure you want to leave?</h3>
+                  <p className="text-sm text-gray-600 mb-4">You have unsaved progress. Before you go, we can connect you with a licensed agent.</p>
+                  <div className="space-y-2">
+                    <a href={`tel:${supportPhone}`} className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white rounded-md py-2">Speak to a Licensed Agent</a>
+                    <a href={`mailto:support@${supportDomain}`} className="block w-full text-center bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-md py-2">Email Us</a>
+                    <a href={(brandConfig as any)?.scheduleUrl || '#'} target="_blank" className="block w-full text-center bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-md py-2">Schedule a Call</a>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between">
+                    <button onClick={() => setShowExitConfirm(false)} className="text-sm text-blue-700 hover:underline">Stay on this page</button>
+                    <button
+                      onClick={() => { setShowExitConfirm(false); closeModal(); onClose(); }}
+                      className="text-xs text-gray-500 hover:underline"
+                    >
+                      OK, leave and lose progress
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
             {/* Progress Bar */}
             <div className="mb-6">
-              <ProgressBar currentStep={currentStep} totalSteps={TOTAL_STEPS} />
+              {(() => { const p = getDisplayProgress(); return (
+                <ProgressBar currentStep={p.displayStep} totalSteps={p.displayTotal} />
+              ); })()}
             </div>
             
             {/* Step Content */}
@@ -263,7 +368,7 @@ export default function DynamicFunnel({ brandConfig, onComplete, onClose }: Dyna
             </div>
             
             {/* Navigation Buttons */}
-            {currentStep !== 13 && currentStep !== 15 && (
+            {currentStep !== 13 && currentStep !== 15 && !(currentStep === 7 && showHandoff) && (
               <div className="flex justify-between items-center mt-6 gap-4">
                 {currentStep > 1 && (
                   <Button
@@ -276,12 +381,12 @@ export default function DynamicFunnel({ brandConfig, onComplete, onClose }: Dyna
                 
                 <div className="flex-1"></div>
                 
-                {currentStep < TOTAL_STEPS && (
+                {currentStep < VIRTUAL_TOTAL_STEPS && (
                   <Button
                     onClick={handleNext}
                     disabled={!canGoNext()}
                   >
-                    {currentStep === TOTAL_STEPS - 1 ? 'Submit' : 'Continue'}
+                    {currentStep === 7 ? 'Submit' : (currentStep === VIRTUAL_TOTAL_STEPS - 1 ? 'Submit' : 'Continue')}
                   </Button>
                 )}
               </div>

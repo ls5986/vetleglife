@@ -1,23 +1,26 @@
+import { Resend } from 'resend';
+
 type BrandInfo = { brand_name: string; domain: string; primary_color?: string };
 
 export async function sendCompletionEmail(args: {
   toEmail: string;
   lead: any;
   brand?: BrandInfo | null;
+  subjectOverride?: string;
+  htmlOverride?: string;
+  fromOverride?: string;
 }) {
-  const { toEmail, lead, brand } = args;
+  const { toEmail, lead, brand, subjectOverride, htmlOverride, fromOverride } = args;
   const resendKey = process.env.RESEND_API_KEY;
   if (!resendKey) {
     console.warn('RESEND_API_KEY not set; skipping email send');
     return { skipped: true };
   }
 
-  // Lazy import to avoid adding hard dep if key is missing
-  const { Resend } = await import('resend');
   const resend = new Resend(resendKey);
 
-  const subject = `${brand?.brand_name || 'Your Application'} is complete`;
-  const html = `
+  const subject = subjectOverride || `${brand?.brand_name || 'Your Application'} is complete`;
+  const html = htmlOverride || `
     <div style="font-family:Arial,sans-serif;">
       <h2 style="color:${brand?.primary_color || '#2563eb'};margin:0 0 12px;">
         ${brand?.brand_name || 'Your Application'}
@@ -32,13 +35,18 @@ export async function sendCompletionEmail(args: {
   `;
 
   try {
+    const defaultDomain = brand?.domain || 'example.com';
+    const configuredFrom = fromOverride || process.env.SENDER_EMAIL || 'Acme <onboarding@resend.dev>';
+    const fromHeader = /</.test(configuredFrom)
+      ? configuredFrom
+      : `Applications <${configuredFrom}>`;
     const resp = await resend.emails.send({
-      from: `Applications <no-reply@${brand?.domain || 'example.com'}>`,
+      from: fromHeader,
       to: toEmail,
       subject,
       html,
     });
-    return resp;
+    return { ...resp, _meta: { subject, html, from: fromHeader } };
   } catch (e) {
     console.error('Error sending completion email', e);
     return { error: true };
