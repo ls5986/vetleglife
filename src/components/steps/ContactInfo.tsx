@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+'use client';
 import { useFunnelStore } from '../../store/funnelStore'
 import { FormField } from '../shared/FormField'
 import { validateContactInfo } from '../../utils/validation'

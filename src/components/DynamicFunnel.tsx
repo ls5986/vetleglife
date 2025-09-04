@@ -118,11 +118,11 @@ export default function DynamicFunnel({ brandConfig, onComplete, onClose }: Dyna
 
   // Create initial session when funnel opens
   React.useEffect(() => {
-    if (isModalOpen && !formData.sessionId) {
+    if (!formData.sessionId) {
       console.log(`🚀 [DYNAMIC FUNNEL] Funnel opened for brand: ${brandConfig.id}`);
       createInitialSession();
     }
-  }, [isModalOpen, formData.sessionId, createInitialSession, brandConfig.id]);
+  }, [formData.sessionId, createInitialSession, brandConfig.id]);
 
   // Show handoff on step 7 only when DOB is valid; do not auto-advance
   React.useEffect(() => {
@@ -293,7 +293,7 @@ export default function DynamicFunnel({ brandConfig, onComplete, onClose }: Dyna
            !!formData.quoteData?.policyDate;
   };
 
-  if (!isModalOpen) return null;
+  // Parent controls mounting of this modal; do not gate on isModalOpen here
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
