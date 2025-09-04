@@ -1,8 +1,8 @@
 import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
+  // Use pure clsx to avoid tailwind-merge vendor chunk issues in server runtime
+  return clsx(inputs);
 }
 
 export function formatDate(date: string | Date) {

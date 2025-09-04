@@ -3,22 +3,22 @@ import { createSupabaseAdmin } from '@/lib/supabase';
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ leadId: string }> }
+  context: { params: Promise<{ leadId: string }> } | any
 ) {
   try {
-    const { leadId } = await params;
+    const resolvedParams = context?.params && typeof context.params.then === 'function'
+      ? await context.params
+      : context?.params;
+    const { leadId } = resolvedParams || {};
 
     console.log('🚀 Individual Lead API called:', { leadId });
 
     const supabaseAdmin = createSupabaseAdmin();
 
-    // Fetch the specific lead with brand information
+    // Fetch the specific lead (no join for compatibility)
     const { data: lead, error } = await supabaseAdmin
       .from('leads')
-      .select(`
-        *,
-        brands (brand_name, domain, primary_color)
-      `)
+      .select('*')
       .eq('id', leadId)
       .single();
 
@@ -49,17 +49,50 @@ export async function GET(
       );
     }
 
+    // Enrich with brand info
+    let brands: any = null;
+    if (lead?.brand_id) {
+      const { data: brand } = await supabaseAdmin
+        .from('brands')
+        .select('brand_name, domain, primary_color')
+        .eq('id', lead.brand_id)
+        .single();
+      if (brand) {
+        brands = brand;
+      }
+    }
+
+    // Normalize email history from form_data.emails for UI
+    let communication_history: any[] = [];
+    try {
+      const fd = (lead as any).form_data || {};
+      if (Array.isArray(fd.emails)) {
+        communication_history = fd.emails.map((e: any) => ({
+          type: e?.type || 'email',
+          at: e?.at,
+          client_status: e?.client?.status || e?.client || 'unknown',
+          client_subject: e?.client?.meta?.subject,
+          client_preview: e?.client?.meta?.html ? String(e.client.meta.html).replace(/<[^>]+>/g, '').slice(0, 160) : undefined,
+          rep_status: e?.rep?.status || e?.rep || 'unknown',
+          rep_subject: e?.rep?.meta?.subject,
+          rep_preview: e?.rep?.meta?.html ? String(e.rep.meta.html).replace(/<[^>]+>/g, '').slice(0, 160) : undefined,
+        }));
+      }
+    } catch {}
+
+    const enrichedLead = { ...lead, brands, communication_history };
+
     console.log('✅ Lead data loaded:', {
       leadId,
-      name: `${lead.first_name || ''} ${lead.last_name || ''}`.trim() || 'Anonymous',
-      email: lead.email || 'No email',
-      currentStep: lead.current_step,
-      status: lead.status
+      name: `${enrichedLead.first_name || ''} ${enrichedLead.last_name || ''}`.trim() || 'Anonymous',
+      email: enrichedLead.email || 'No email',
+      currentStep: enrichedLead.current_step,
+      status: enrichedLead.status
     });
 
     return NextResponse.json({
       success: true,
-      data: lead
+      data: enrichedLead
     });
 
   } catch (error) {
@@ -77,10 +110,13 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: Promise<{ leadId: string }> }
+  context: { params: Promise<{ leadId: string }> } | any
 ) {
   try {
-    const { leadId } = await params;
+    const resolvedParams = context?.params && typeof context.params.then === 'function'
+      ? await context.params
+      : context?.params;
+    const { leadId } = resolvedParams || {};
     const body = await request.json();
     const { updateData } = body;
 
