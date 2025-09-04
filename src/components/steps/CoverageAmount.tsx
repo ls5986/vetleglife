@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
 'use client';
+import React, { useEffect } from 'react';
 import { useFunnelStore } from '../../store/funnelStore';
 
 const coverageAmounts = [

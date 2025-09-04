@@ -1,3 +1,4 @@
+'use client';
 import React, { useState, useEffect } from 'react';
 import { useFunnelStore } from '../../store/funnelStore';
 import { FormField } from '../shared/FormField';

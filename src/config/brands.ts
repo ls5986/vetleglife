@@ -873,3 +873,24 @@ export function getBrandByDomain(domain: string): Brand | undefined {
 export function getAllActiveBrands(): Brand[] {
   return LEGACY_BRANDS.filter(brand => brand.isActive);
 }
+
+// Meta helpers for dynamic funnels
+export function getFunnelMeta(brandId: string): {
+  totalSteps: number;
+  completionStep: number;
+  brandSpecificStepCount: number;
+} {
+  const cfg = getBrandConfig(brandId);
+  if (!cfg) {
+    return { totalSteps: 0, completionStep: 0, brandSpecificStepCount: 0 };
+  }
+
+  const steps = cfg.funnelSteps || [];
+  const nonCountingComponents = new Set<string>(['StreamingLoadingSpinner']);
+  const totalSteps = steps.filter(s => !nonCountingComponents.has(s.component)).length;
+  const completionStep = steps.find(s => s.component === 'FinalSuccessModal')?.stepNumber
+    ?? (steps.length > 0 ? Math.max(...steps.map(s => s.stepNumber)) : 0);
+  const brandSpecificStepCount = steps.filter(s => s.isBrandSpecific).length;
+
+  return { totalSteps, completionStep, brandSpecificStepCount };
+}

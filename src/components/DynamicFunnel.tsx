@@ -41,7 +41,7 @@ import { ApplicationStep1 } from './steps/ApplicationStep1';
 import { ApplicationStep2 } from './steps/ApplicationStep2';
 import { FinalSuccessModal } from './steps/FinalSuccessModal';
 import { validateContactInfo } from '../utils/validation';
-import { BrandConfig, getBrandById } from '../config/brands';
+import { BrandConfig, getBrandById, getFunnelMeta } from '../config/brands';
 import AgentHandoffStep from './steps/AgentHandoffStep';
 
 interface DynamicFunnelProps {
@@ -94,7 +94,8 @@ export default function DynamicFunnel({ brandConfig, onComplete, onClose }: Dyna
   const supportPhone = legacyBrand?.phone || '1-800-555-1234';
   const supportDomain = legacyBrand?.domain || 'legacylifeadvocates.com';
 
-  const TOTAL_STEPS = brandConfig.funnelSteps.length;
+  const meta = React.useMemo(() => getFunnelMeta(brandConfig.id), [brandConfig.id]);
+  const TOTAL_STEPS = meta.totalSteps;
 
   // Map real step numbers to chunked display steps for the top bar:
   // 1-7, then 1-8 (steps 8-15), then 1-2 (steps 16-17). Step 18 treated as 2/2.

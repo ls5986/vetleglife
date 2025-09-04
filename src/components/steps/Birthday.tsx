@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
 'use client';
+import React, { useEffect, useState } from 'react';
 import { useFunnelStore } from '../../store/funnelStore';
 
 export const Birthday: React.FC = () => {
