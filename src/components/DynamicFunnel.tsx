@@ -256,7 +256,7 @@ export default function DynamicFunnel({ brandConfig, onComplete, onClose }: Dyna
       if (canGoNext()) {
         setShowHandoff(true);
         setAutoAdvanceEnabled(false);
-        goToNextStep(); // advance to step 8 to render the handoff as its own screen
+        // Do NOT advance here; AgentHandoffStep's onContinue controls advancement to step 8
       }
       return;
     }

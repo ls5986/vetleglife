@@ -3,10 +3,13 @@ import { createSupabaseAdmin } from '@/lib/supabase';
 
 export async function GET(
   request: Request,
-  context: any
+  context: { params: Promise<{ leadId: string }> } | any
 ) {
   try {
-    const { leadId } = context?.params || {};
+    const resolvedParams = context?.params && typeof context.params.then === 'function'
+      ? await context.params
+      : context?.params;
+    const { leadId } = resolvedParams || {};
 
     console.log('🚀 Individual Lead API called:', { leadId });
 
@@ -107,10 +110,13 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  context: any
+  context: { params: Promise<{ leadId: string }> } | any
 ) {
   try {
-    const { leadId } = context?.params || {};
+    const resolvedParams = context?.params && typeof context.params.then === 'function'
+      ? await context.params
+      : context?.params;
+    const { leadId } = resolvedParams || {};
     const body = await request.json();
     const { updateData } = body;
 
