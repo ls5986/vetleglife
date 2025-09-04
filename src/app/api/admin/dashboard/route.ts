@@ -53,30 +53,36 @@ export async function GET(request: Request) {
       brands: brands?.map(b => ({ id: b.id, name: b.brand_name, active: b.is_active }))
     });
 
-    // Build queries with brand filter
+    // Build queries (no joins to avoid FK/type mismatch issues)
     let leadsQuery = supabaseAdmin
       .from('leads')
-      .select(`
-        *,
-        brands (brand_name, domain, primary_color)
-      `)
-      .gte('created_at', startDate);
-    
-    let appsQuery = supabaseAdmin
-      .from('applications')
       .select('*')
       .gte('created_at', startDate);
 
     if (selectedBrand !== 'all') {
       leadsQuery = leadsQuery.eq('brand_id', selectedBrand);
-      appsQuery = appsQuery.eq('brand_id', selectedBrand);
     }
 
-    // Get leads and applications data
-    const [leadsResult, appsResult] = await Promise.all([
-      leadsQuery,
-      appsQuery
-    ]);
+    // Get leads and applications data (apps may fail if table missing)
+    const leadsResult = await leadsQuery;
+    let appsResult: any = { data: [], error: null };
+    try {
+      // Attempt to query applications table if it exists
+      appsResult = await supabaseAdmin
+        .from('applications')
+        .select('*')
+        .gte('created_at', startDate);
+      if (selectedBrand !== 'all') {
+        appsResult = await supabaseAdmin
+          .from('applications')
+          .select('*')
+          .gte('created_at', startDate)
+          .eq('brand_id', selectedBrand);
+      }
+    } catch (e) {
+      console.warn('⚠️ Applications table not available or query failed, continuing without applications');
+      appsResult = { data: [], error: null };
+    }
 
     if (leadsResult.error) {
       console.error('❌ Leads error:', leadsResult.error);
@@ -87,8 +93,8 @@ export async function GET(request: Request) {
       throw appsResult.error;
     }
 
-    const leads = leadsResult.data || [];
-    const applications = appsResult.data || [];
+    const leads: any[] = leadsResult.data || [];
+    const applications: any[] = Array.isArray(appsResult?.data) ? appsResult.data : [];
 
     console.log('📊 Data loaded:', {
       leads: leads.length,
@@ -119,15 +125,25 @@ export async function GET(request: Request) {
     const activeLeads = leads.filter(lead => lead.status === 'active').length;
     const abandonedLeads = leads.filter(lead => lead.status === 'abandoned').length;
 
-    // Get recent leads
-    const { data: recentLeads } = await supabaseAdmin
+    // Get recent leads (no join)
+    const { data: recentLeadsRaw } = await supabaseAdmin
       .from('leads')
-      .select(`
-        *,
-        brands (brand_name, domain, primary_color)
-      `)
+      .select('*')
       .order('created_at', { ascending: false })
       .limit(10);
+
+    // Attach brand info manually to mimic join shape
+    const brandMap = new Map((brands || []).map((b: any) => [b.id, b]));
+    const recentLeads = (recentLeadsRaw || []).map((lead: any) => ({
+      ...lead,
+      brands: brandMap.has(lead.brand_id)
+        ? {
+            brand_name: brandMap.get(lead.brand_id)!.brand_name,
+            domain: brandMap.get(lead.brand_id)!.domain,
+            primary_color: brandMap.get(lead.brand_id)!.primary_color,
+          }
+        : null,
+    }));
 
     const dashboardData = {
       stats: {

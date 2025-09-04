@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseAdmin } from '@/lib/supabase';
+import { sendCompletionEmail } from '@/lib/email';
 
 export async function POST(request: Request) {
   try {
@@ -235,6 +236,20 @@ export async function POST(request: Request) {
       status: result.status
     });
 
+    // If lead marked completed, attempt to send email
+    if (result.status && String(result.status).toLowerCase() === 'completed' && result.email) {
+      try {
+        const { data: brand } = await supabaseAdmin
+          .from('brands')
+          .select('brand_name, domain, primary_color')
+          .eq('id', result.brand_id)
+          .single();
+        await sendCompletionEmail({ toEmail: result.email, lead: result, brand });
+      } catch (e) {
+        console.warn('Completion email send skipped/failed', e);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       data: result,
@@ -272,10 +287,7 @@ export async function GET(request: Request) {
 
     const supabaseAdmin = createSupabaseAdmin();
 
-    let query = supabaseAdmin.from('leads').select(`
-      *,
-      brands (brand_name, domain, primary_color)
-    `, { count: 'exact' });
+    let query = supabaseAdmin.from('leads').select('*', { count: 'exact' });
 
     if (sessionId) {
       query = query.eq('session_id', sessionId);
@@ -284,7 +296,7 @@ export async function GET(request: Request) {
       query = query.eq('brand_id', brandId);
     }
 
-    const { data, error } = await query.order('created_at', { ascending: false });
+    const { data: leadsRaw, error } = await query.order('created_at', { ascending: false });
 
     if (error) {
       console.error('❌ Error fetching leads:', error);
@@ -292,12 +304,29 @@ export async function GET(request: Request) {
     }
 
     console.log('✅ Leads fetched successfully:', {
-      count: data?.length || 0,
+      count: leadsRaw?.length || 0,
       sessionId,
       brandId
     });
 
-    return NextResponse.json({ success: true, data });
+    // Attach brand info
+    const { data: brands } = await supabaseAdmin
+      .from('brands')
+      .select('*')
+      .eq('is_active', true);
+    const brandMap = new Map((brands || []).map((b: any) => [b.id, b]));
+    const leads = (leadsRaw || []).map((lead: any) => ({
+      ...lead,
+      brands: brandMap.has(lead.brand_id)
+        ? {
+            brand_name: brandMap.get(lead.brand_id)!.brand_name,
+            domain: brandMap.get(lead.brand_id)!.domain,
+            primary_color: brandMap.get(lead.brand_id)!.primary_color,
+          }
+        : null,
+    }));
+
+    return NextResponse.json({ success: true, data: leads });
   } catch (error) {
     console.error('💥 Error in leads GET API:', error);
     return NextResponse.json(

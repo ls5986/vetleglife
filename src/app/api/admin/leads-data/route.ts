@@ -34,13 +34,10 @@ export async function GET(request: Request) {
 
     console.log('✅ Brands loaded:', brands?.length || 0);
 
-    // Build leads query
+    // Build leads query (no joins; enrich in-code)
     let leadsQuery = supabaseAdmin
       .from('leads')
-      .select(`
-        *,
-        brands (brand_name, domain, primary_color)
-      `)
+      .select('*')
       .order('created_at', { ascending: false });
 
     // Apply filters
@@ -53,14 +50,27 @@ export async function GET(request: Request) {
     }
 
     // Get all leads for filtering
-    const { data: allLeads, error: leadsError } = await leadsQuery;
+    const { data: allLeadsRaw, error: leadsError } = await leadsQuery;
 
     if (leadsError) {
       console.error('❌ Leads error:', leadsError);
       throw leadsError;
     }
 
-    console.log('📊 All leads loaded:', allLeads?.length || 0);
+    console.log('📊 All leads loaded:', allLeadsRaw?.length || 0);
+
+    // Attach brand info manually to mimic join shape so UI remains unchanged
+    const brandMap = new Map((brands || []).map((b: any) => [b.id, b]));
+    const allLeads = (allLeadsRaw || []).map((lead: any) => ({
+      ...lead,
+      brands: brandMap.has(lead.brand_id)
+        ? {
+            brand_name: brandMap.get(lead.brand_id)!.brand_name,
+            domain: brandMap.get(lead.brand_id)!.domain,
+            primary_color: brandMap.get(lead.brand_id)!.primary_color,
+          }
+        : null,
+    }));
 
     // Apply search filter
     let filteredLeads = allLeads || [];
